@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "bgstools"
+version = "0.1.0"
+description = ""
+authors = ["José Beltrán <102664984+jose-begeospatial@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+PyYAML = "^6.0"
+h3 = "^3.7.6"
+pyproj = "^3.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
