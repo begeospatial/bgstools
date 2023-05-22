@@ -8,6 +8,7 @@ survey_data/
 /seams/data/
 *Zone.Identifier
 pgdata/
+history.txt
 
 # Repo-specific GitIgnore ----------------------------------------------------------------------------------------------
 *.jpg
