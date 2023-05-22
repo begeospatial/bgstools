@@ -154,3 +154,4 @@ class DataStore:
         """Deletes the data stored by the current storage strategy."""
         self.storage_strategy.delete_data() 
 
+from .datastorage import DataStore, StorageStrategy, YamlStorage

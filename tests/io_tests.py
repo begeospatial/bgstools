@@ -1,6 +1,7 @@
 import unittest
 from collections import OrderedDict
-from bgstools.io import load_yaml, get_available_services, script_as_module
+from bgstools.io import load_yaml, get_available_services
+from bgstools.utils import script_as_module
 
 
 class TestFunctions(unittest.TestCase):

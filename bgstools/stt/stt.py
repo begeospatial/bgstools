@@ -1,7 +1,7 @@
 # streamlit tools (stt)
 from collections import OrderedDict
 from typing import Optional, Tuple, Any
-from bgstools.io import script_as_module
+from ..utils import script_as_module
 import streamlit as st
 
 
