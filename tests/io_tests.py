@@ -1,4 +1,5 @@
 import unittest
+import yaml
 from collections import OrderedDict
 from bgstools.io import load_yaml, get_available_services
 from bgstools.utils import script_as_module
