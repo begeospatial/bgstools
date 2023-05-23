@@ -13,6 +13,20 @@ files = [
 ]
 
 [[package]]
+name = "gdal"
+version = "3.6.2"
+description = "GDAL: Geospatial Data Abstraction Library"
+category = "main"
+optional = false
+python-versions = ">=3.6.0"
+files = [
+    {file = "GDAL-3.6.2.tar.gz", hash = "sha256:a167cde1813707d91a938dad1a22f280f5ad28c45980d42e948fb8c59f890f5a"},
+]
+
+[package.extras]
+numpy = ["numpy (>1.0.0)"]
+
+[[package]]
 name = "h3"
 version = "3.7.6"
 description = "Hierarchical hexagonal geospatial indexing system"
@@ -166,4 +180,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "11ce18274ca4ad0a126f0dd6c51681d7656f2e4f447ca80130ce33d5495b2d46"
+content-hash = "602638da0a01f78c29c977fbad60e35a101c42736d72d07a5be2863cc38f3ef6"
