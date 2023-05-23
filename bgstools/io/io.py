@@ -1,6 +1,7 @@
 import os
 import yaml
 from collections import OrderedDict
+import requests
 
 
 def load_yaml(filepath: str) -> dict:
@@ -57,3 +58,90 @@ def get_available_services(services_filepath: str) -> OrderedDict:
         return services_dict
 
     return None
+
+
+def path_exists(path):
+    """
+    Checks if a given path exists, whether it's a local file, remote URL, or LAN path.
+
+    Args:
+        path (str): The path to check.
+
+    Returns:
+        bool: True if the path exists, False otherwise.
+    """
+    if is_remote_url(path):
+        return check_remote_path_exists(path)
+    elif is_lan_path(path):
+        return check_lan_path_exists(path)
+    else:
+        return check_local_path_exists(path)
+
+
+def is_remote_url(path):
+    """
+    Checks if the given path is a remote URL.
+
+    Args:
+        path (str): The path to check.
+
+    Returns:
+        bool: True if the path is a remote URL, False otherwise.
+    """
+    return path.startswith('http://') or path.startswith('https://')
+
+
+def is_lan_path(path):
+    """
+    Checks if the given path is a LAN path.
+
+    Args:
+        path (str): The path to check.
+
+    Returns:
+        bool: True if the path is a LAN path, False otherwise.
+    """
+    return path.startswith('\\\\')
+
+
+def check_remote_path_exists(url):
+    """
+    Checks if the given remote URL exists.
+
+    Args:
+        url (str): The URL to check.
+
+    Returns:
+        bool: True if the URL exists, False otherwise.
+    """
+    try:
+        response = requests.head(url)
+        return response.status_code == requests.codes.ok
+    except requests.exceptions.RequestException:
+        return False
+
+
+def check_lan_path_exists(path):
+    """
+    Checks if the given LAN path exists.
+
+    Args:
+        path (str): The path to check.
+
+    Returns:
+        bool: True if the path exists, False otherwise.
+    """
+    return os.path.exists(path)
+
+
+def check_local_path_exists(path):
+    """
+    Checks if the given local path exists.
+
+    Args:
+        path (str): The path to check.
+
+    Returns:
+        bool: True if the path exists, False otherwise.
+    """
+    return os.path.exists(path)
