@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from osgeo import gdal
+
 
 def convert_image_frame(frame, output_path, format='png', compression=False, jpeg_quality=95, tiff_metadata=None):
     """
@@ -34,21 +34,6 @@ def convert_image_frame(frame, output_path, format='png', compression=False, jpe
             cv2.imwrite(output_path, frame, params)
         else:
             cv2.imwrite(output_path, frame)
-    elif format.lower() == 'geotiff' or format.lower() == 'gtiff' or format.lower() == 'tiff':
-        if frame.ndim == 2:
-            frame = np.expand_dims(frame, axis=2)
-        if tiff_metadata is None:
-            tiff_metadata = {}
-        driver = gdal.GetDriverByName('GTiff')
-        height, width, channels = frame.shape
-        dataset = driver.Create(output_path, width, height, channels, gdal.GDT_Byte)
-        for i in range(channels):
-            band = dataset.GetRasterBand(i + 1)
-            band.WriteArray(frame[:, :, i])
-        for key, value in tiff_metadata.items():
-            dataset.SetMetadataItem(key, value)
-        dataset.FlushCache()
-        dataset = None
     else:
         raise ValueError("Unsupported output format: {}".format(format))
 
@@ -132,19 +117,4 @@ def export_processed_tiff(image, output_path):
     """
     cv2.imwrite(output_path, image)
 
-import numpy as np
-import cv2
 
-
-def load_big_tiff(path):
-    """
-    Loads a big .tiff image using memory-mapped files.
-
-    Args:
-        path (str): The path to the .tiff image.
-
-    Returns:
-        numpy.ndarray: The image as a NumPy array.
-    """
-    img = cv2.imread(path, cv2.IMREAD_UNCHANGED | cv2.IMREAD_ANYDEPTH)
-    return img
