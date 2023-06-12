@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "bgstools"
-version = "0.1.5"
+version = "0.1.7"
 description = "BeGeoSpatial Development Tools"
 authors = ["José Beltrán <102664984+jose-begeospatial@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 PyYAML = "^6.0"
 h3 = "^3.7.6"
 pyproj = "^3.5.0"
