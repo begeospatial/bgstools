@@ -2,6 +2,26 @@ import os
 import yaml
 from collections import OrderedDict
 import requests
+import toml
+
+
+def load_toml_variables(file_path):
+    """
+    Load variables from a .toml file into a dictionary.
+
+    Args:
+        file_path (str): Path to the .toml file.
+
+    Returns:
+        dict: Dictionary containing the loaded variables.
+    """
+    try:
+        with open(file_path, "r") as file:
+            data = toml.load(file)
+            return data
+    except IOError:
+        print(f"Error: Unable to load .toml file from {file_path}")
+        return {}
 
 
 def load_yaml(filepath: str) -> dict:
