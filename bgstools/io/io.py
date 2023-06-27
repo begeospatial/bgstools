@@ -3,6 +3,193 @@ import yaml
 from collections import OrderedDict
 import requests
 import toml
+from pathlib import Path
+
+
+
+def create_directory_list(dirpath: str) -> list:
+    """
+    Creates a list of directories within a given directory, excluding files.
+
+    Parameters:
+    - dirpath: The path of the directory.
+
+    Returns:
+    - A list of directories within the given directory.
+
+    Raises:
+    - OSError: If there is an error accessing the directory.
+
+    """
+    try:
+        directories = []
+        for item in os.listdir(dirpath):
+            item_path = os.path.join(dirpath, item)
+            if os.path.isdir(item_path):
+                directories.append(item_path)
+        return directories
+    except OSError as e:
+        raise OSError(f"Error accessing directory: {e}")
+    
+    
+def create_file_list_with_extension(dirpath: str, extension: str) -> list:
+    """
+    Creates a list of files within a given directory, filtered by file extension.
+
+    Parameters:
+    - dirpath: The path of the directory.
+    - extension: The file extension to filter by (e.g., ".txt", ".csv").
+
+    Returns:
+    - A list of file paths within the given directory that match the specified file extension.
+
+    Raises:
+    - OSError: If there is an error accessing the directory.
+
+    """
+    try:
+        files = []
+        for item in os.listdir(dirpath):
+            item_path = os.path.join(dirpath, item)
+            if os.path.isfile(item_path) and item.endswith(extension):
+                files.append(item_path)
+        return files
+    except OSError as e:
+        raise OSError(f"Error accessing directory: {e}")
+
+
+def check_dirpath_owner(dirpath: str):
+    """
+    Checks the ownership of a directory.
+
+    Parameters:
+    - dirpath: The path of the directory to check ownership for.
+
+    Returns:
+    - A dictionary containing the owner and group of the directory if it exists, otherwise an empty dictionary.
+
+    """
+
+    path = Path(dirpath)
+
+    if path.exists():
+        return {"Owner": path.owner(), "Group": path.group()}
+    else:
+        return {}
+
+
+
+def check_directory_exist_and_writable(dirpath, callback=None):
+    """
+    Checks if a directory exists and if it is writable.
+
+    Parameters:
+    - dirpath: The path of the directory to be checked.
+    - callback (optional): A callback function to be executed after checking the directory,
+      used to deliver message of success.
+   
+
+    Returns:
+    - success: Boolean indicating if the directory exists and is writable (True), exists but not writable (False),
+               or doesn't exist (None).
+
+    """
+
+    success = None
+    message = None
+
+    if os.path.exists(dirpath) and os.path.isdir(dirpath):
+        # Check if directory exists
+
+        if os.access(dirpath, os.W_OK):
+            # Check if directory is writable
+
+            message = f"The directory {dirpath} exists and is writable."
+            success = True
+
+        else:
+            ownership = check_dirpath_owner(dirpath)
+            # Get directory ownership
+
+            message = f"The directory {dirpath} exists but is not writable. Ownership: `{ownership}`"
+            success = False
+
+    else:
+        message = f"The directory {dirpath} does not exist."
+        success = None
+
+    if callback:
+        callback(message)
+
+    return success
+
+
+def create_new_directory(dirpath,callback:callable=None):
+    """
+    Creates a new directory if it does not exist already.
+
+    Parameters:
+    - dirpath: The path of the directory to be created.
+    - callback (optional): A callback function to be executed after directory creation.
+
+    Returns:
+    - The path of the directory.
+
+    Raises:
+    - OSError: If there is an error while creating the directory.
+
+    """
+    try:
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)  # Create the directory if it doesn't exist
+            message = f"The directory {dirpath} was created."
+        else:
+            message(f"The directory {dirpath} already exists.")
+    
+    except OSError as e:
+        raise OSError(f"Error creating directory: {e}")
+    
+    if callback:
+        callback(message)
+    return dirpath
+
+
+def create_subdirectory(directory: str, subdirectory: str, callback: callable = None) -> str:
+    """
+    Check if a subdirectory exists within a given directory.
+    If the subdirectory doesn't exist, create it.
+
+    Args:
+        directory (str): Path to the directory to check/create the subdirectory in.
+        subdirectory (str): Name of the subdirectory to check/create.
+        callback (callable, optional): A callback function to be executed after creating the subdirectory.
+
+    Returns:
+        str: The full path to the subdirectory.
+
+    Raises:
+        ValueError: If the provided directory path is invalid.
+        OSError: If there is an error while creating the subdirectory.
+    """
+    if not os.path.isdir(directory):
+        raise ValueError(f"'{directory}' is not a valid directory path.")
+
+    subdirectory_path = os.path.join(directory, subdirectory)
+
+    try:
+        if not os.path.exists(subdirectory_path):
+            os.makedirs(subdirectory_path)
+            message = f"Subdirectory '{subdirectory}' created in '{directory}'."
+        else:
+            message = f"Subdirectory '{subdirectory}' already exists in '{directory}'."
+    except OSError as e:
+        message = f"Error while creating the subdirectory: {str(e)}"
+        raise OSError(message)
+
+    if callback:
+        callback(message)
+
+    return subdirectory_path
 
 
 def load_toml_variables(file_path):
@@ -24,7 +211,7 @@ def load_toml_variables(file_path):
         return {}
 
 
-def load_yaml(filepath: str) -> dict:
+def load_yaml(filepath: str, file = None) -> dict:
     """
     Loads a YAML file.
 
@@ -62,6 +249,27 @@ def load_yaml(filepath: str) -> dict:
                 raise yaml.YAMLError(f'File `{filepath}` loading error. \n {msg}')
             else:
                 return yaml_data
+
+
+def load_yaml_from_file(file):
+    """
+    Loads YAML data from a file object.
+
+    Parameters:
+    - file: The file object representing the YAML file.
+
+    Returns:
+    - The loaded YAML data.
+
+    Raises:
+    - yaml.YAMLError: If there is an error while loading the YAML data from the file.
+    """
+    try:
+        yaml_data = yaml.safe_load(file)
+    except yaml.YAMLError as e:
+        raise yaml.YAMLError(f'File loading error. \n {e}')
+    else:
+        return yaml_data
 
 
 def get_available_services(services_filepath: str) -> OrderedDict:
