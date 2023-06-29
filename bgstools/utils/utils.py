@@ -3,6 +3,85 @@ import sys
 from importlib.util import spec_from_file_location, module_from_spec
 
 
+def str_as_dtype(datatype: str, callback: callable = None):
+    """
+    Converts a string representation of a data type to the corresponding Python data type.
+
+    Args:
+        datatype (str): The string representation of the data type.
+        callback (callable, optional): A callback function to handle exceptions.
+
+    Returns:
+        The corresponding Python data type if `datatype` is a valid type, otherwise None.
+
+    Raises:
+        TypeError: If `datatype` is not a string.
+        ValueError: If `datatype` is not a recognized data type.
+
+    Example:
+        str_as_dtype('int')  # returns <class 'int'>
+        str_as_dtype('bool')  # returns <class 'bool'>
+    """
+    try:
+        if not isinstance(datatype, str):
+            raise TypeError("Input 'datatype' must be a string.")
+
+        if datatype == 'str':
+            return str
+        elif datatype == 'int':
+            return int
+        elif datatype == 'float':
+            return float
+        elif datatype == 'bool':
+            return bool
+        else:
+            raise ValueError(f"Unrecognized data type: '{datatype}'")
+
+    except Exception as e:
+        if callback is not None and callable(callback):
+            exception_message = f"**`str_as_dtype` exception occurred:** {e}"
+            callback(exception_message)
+        else:
+            raise
+
+
+def colnames_dtype_mapping(colnames_dtype_dict: dict):
+    """
+    Maps column names to their corresponding data types based on the provided dictionary.
+
+    Args:
+        colnames_dtype_dict (dict): A dictionary mapping column names to their data types.
+
+    Returns:
+        A new dictionary where keys are column names and values are the corresponding data types.
+
+    Raises:
+        TypeError: If `colnames_dtype_dict` is not a dictionary.
+        ValueError: If `colnames_dtype_dict` is empty or contains invalid data types.
+
+    Example:
+        colnames_dtype_mapping({'col1': 'int', 'col2': 'str', 'col3': 'float'})
+        # returns {'col1': <class 'int'>, 'col2': <class 'str'>, 'col3': <class 'float'>}
+    """
+    try:
+        if not isinstance(colnames_dtype_dict, dict):
+            raise TypeError("Input 'colnames_dtype_dict' must be a dictionary.")
+
+        if not colnames_dtype_dict:
+            raise ValueError("Input 'colnames_dtype_dict' cannot be empty.")
+
+        mapping = {}
+        for colname, dtype in colnames_dtype_dict.items():
+            mapping[colname] = str_as_dtype(dtype)
+
+        return mapping
+
+    except (TypeError, ValueError) as e:
+        # Handle the exception or re-raise it
+        raise e
+
+
+
 def script_as_module(module_filepath: str, services_dirpath: str) -> bool:
     """
     Loads a Python script as a module, registers it, and makes it available for the package path.

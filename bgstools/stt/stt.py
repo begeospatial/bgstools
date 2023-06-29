@@ -4,6 +4,15 @@ from typing import Optional, Tuple
 from ..utils import script_as_module
 import streamlit as st
 import hashlib
+from typing import Any
+
+
+def update_session_state(key:str, value:Any)->bool:
+    if key not in st.session_state:
+        st.session_state[key] = value
+    else:
+        st.session_state[key] = value
+    return True
 
 
 def build_activities_menu(
