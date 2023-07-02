@@ -14,6 +14,7 @@ def str_as_dtype(datatype: str, callback: callable = None):
 
     Returns:
         The corresponding Python data type if `datatype` is a valid type, otherwise None.
+        The exception is `datetime` which is returned as a string.
 
     Raises:
         TypeError: If `datatype` is not a string.
@@ -35,6 +36,8 @@ def str_as_dtype(datatype: str, callback: callable = None):
             return float
         elif datatype == 'bool':
             return bool
+        elif datatype == 'datetime':
+            return str
         else:
             raise ValueError(f"Unrecognized data type: '{datatype}'")
 
@@ -46,7 +49,7 @@ def str_as_dtype(datatype: str, callback: callable = None):
             raise
 
 
-def colnames_dtype_mapping(colnames_dtype_dict: dict):
+def colnames_dtype_mapping(colnames_dtype_dict: dict | list)-> dict:
     """
     Maps column names to their corresponding data types based on the provided dictionary.
 
@@ -64,15 +67,20 @@ def colnames_dtype_mapping(colnames_dtype_dict: dict):
         colnames_dtype_mapping({'col1': 'int', 'col2': 'str', 'col3': 'float'})
         # returns {'col1': <class 'int'>, 'col2': <class 'str'>, 'col3': <class 'float'>}
     """
+    _colnames_dtype_dict = colnames_dtype_dict
     try:
-        if not isinstance(colnames_dtype_dict, dict):
+        if isinstance(colnames_dtype_dict, list):
+            for item in colnames_dtype_dict:
+                _colnames_dtype_dict = {item['colname']: item['dtype'] for item in colnames_dtype_dict}
+
+        if not isinstance(_colnames_dtype_dict, dict):
             raise TypeError("Input 'colnames_dtype_dict' must be a dictionary.")
 
-        if not colnames_dtype_dict:
+        if not _colnames_dtype_dict:
             raise ValueError("Input 'colnames_dtype_dict' cannot be empty.")
 
         mapping = {}
-        for colname, dtype in colnames_dtype_dict.items():
+        for colname, dtype in _colnames_dtype_dict.items():
             mapping[colname] = str_as_dtype(dtype)
 
         return mapping
