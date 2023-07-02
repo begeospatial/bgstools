@@ -156,24 +156,32 @@ class DataStore:
 
 
 
-
-
-
-def update_datastore(DATASTORE:DataStore, kwargs:Dict, callback:Callable=None):
+def update_datastore(DATASTORE: DataStore, kwargs: Dict = None, callback: Callable = None) -> Dict:
     """Updates the data in the datastore using the given keyword arguments.
 
     Args:
         DATASTORE (DataStore): The datastore to update.
-        kwargs (Dict): The keyword arguments to update the datastore with.
+        kwargs (Dict, optional): The keyword arguments to update the datastore with.
+        callback (Callable, optional): A function to call in case of an error.
+
+    Returns:
+        Dict: The updated data in the datastore.
+
+    Raises:
+        Exception: If there is an error while updating the datastore.
     """
     current_data = DATASTORE.storage_strategy.data
-    current_data.update(kwargs)
+
+    if kwargs:
+        current_data.update(kwargs)
+
     try:
         DATASTORE.store_data(data=current_data)
     except Exception as e:
-        print(e)
-        callback(f'Error updating datastore. {e}')
-    else:
-        return current_data
+        if callback:
+            callback(f'Error updating datastore: {e}')
+        raise Exception(f'Error updating datastore: {e}')
+    
+    return current_data
 
     
