@@ -154,4 +154,26 @@ class DataStore:
         """Deletes the data stored by the current storage strategy."""
         self.storage_strategy.delete_data() 
 
-from .datastorage import DataStore, StorageStrategy, YamlStorage
+
+
+
+
+
+def update_datastore(DATASTORE:DataStore, kwargs:Dict, callback:Callable=None):
+    """Updates the data in the datastore using the given keyword arguments.
+
+    Args:
+        DATASTORE (DataStore): The datastore to update.
+        kwargs (Dict): The keyword arguments to update the datastore with.
+    """
+    current_data = DATASTORE.storage_strategy.data
+    current_data.update(kwargs)
+    try:
+        DATASTORE.store_data(data=current_data)
+    except Exception as e:
+        print(e)
+        callback(f'Error updating datastore. {e}')
+    else:
+        return current_data
+
+    

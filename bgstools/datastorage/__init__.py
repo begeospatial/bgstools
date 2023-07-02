@@ -1,1 +1,1 @@
-from .datastorage import DataStore, StorageStrategy, YamlStorage
+from .datastorage import DataStore, StorageStrategy, YamlStorage, update_datastore
