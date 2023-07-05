@@ -4,4 +4,4 @@ from .io import load_yaml, get_available_services, \
     path_exists, load_toml_variables, check_dirpath_owner, \
     load_yaml_from_file, create_new_directory,  \
     check_directory_exist_and_writable, create_directory_list, \
-    create_file_list_with_extension, create_subdirectory
+    create_file_list_with_extension, create_subdirectory, get_files_dictionary 
