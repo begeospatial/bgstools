@@ -1,7 +1,7 @@
 import os
 import sys
 from importlib.util import spec_from_file_location, module_from_spec
-
+import datetime
 
 
 def str_as_dtype(datatype: str, callback: callable = None):
@@ -37,7 +37,7 @@ def str_as_dtype(datatype: str, callback: callable = None):
         elif datatype == 'bool':
             return bool
         elif datatype == 'datetime':
-            return str
+            return datetime
         else:
             raise ValueError(f"Unrecognized data type: '{datatype}'")
 

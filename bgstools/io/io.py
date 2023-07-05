@@ -1,10 +1,37 @@
 import os
+from glob import glob
 import yaml
 from collections import OrderedDict
 import requests
 import toml
 from pathlib import Path
 
+
+def get_files_dictionary(dirpath: str, file_extension: str) -> dict:
+    """
+    Recursively search for files with the specified `file_extension` in the given `dirpath` and return a dictionary
+    with the filename (without extension) as the key and the full normalized path of the file as the value.
+
+    Args:
+        dirpath (str): The directory path to start the search.
+        file_extension (str): The file extension to filter the files.
+
+    Returns:
+        dict: A dictionary where the keys are the filenames (without extension) and the values are the full normalized paths of the files.
+    """
+    if not os.path.isdir(dirpath):
+        raise ValueError(f"The specified directory path '{dirpath}' does not exist or is not a directory.")
+
+    files_dictionary = {}
+    
+    for root, dirs, files in os.walk(dirpath):
+        for file in files:
+            if file.endswith(file_extension):
+                full_path = os.path.join(root, file)
+                filename_without_extension = os.path.splitext(file)[0]
+                files_dictionary[filename_without_extension] = os.path.normpath(full_path)
+
+    return files_dictionary
 
 
 def create_directory_list(dirpath: str) -> list:
