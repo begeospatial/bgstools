@@ -7,7 +7,7 @@ import toml
 from pathlib import Path
 
 
-def get_files_dictionary(dirpath: str, file_extension: str) -> dict:
+def get_files_dictionary(dirpath: str, file_extension: str, keep_extension_in_key:bool = False) -> dict:
     """
     Recursively search for files with the specified `file_extension` in the given `dirpath` and return a dictionary
     with the filename (without extension) as the key and the full normalized path of the file as the value.
@@ -15,6 +15,7 @@ def get_files_dictionary(dirpath: str, file_extension: str) -> dict:
     Args:
         dirpath (str): The directory path to start the search.
         file_extension (str): The file extension to filter the files.
+        keep_extension_in_key (bool, optional): If True, the file extension will be kept in the key of the dictionary.
 
     Returns:
         dict: A dictionary where the keys are the filenames (without extension) and the values are the full normalized paths of the files.
@@ -28,8 +29,11 @@ def get_files_dictionary(dirpath: str, file_extension: str) -> dict:
         for file in files:
             if file.endswith(file_extension):
                 full_path = os.path.join(root, file)
-                filename_without_extension = os.path.splitext(file)[0]
-                files_dictionary[filename_without_extension] = os.path.normpath(full_path)
+                if keep_extension_in_key:
+                    files_dictionary[file] = os.path.normpath(full_path)
+                else:
+                    filename_without_extension = os.path.splitext(file)[0]
+                    files_dictionary[filename_without_extension] = os.path.normpath(full_path)
 
     return files_dictionary
 

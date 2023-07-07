@@ -1,4 +1,7 @@
 # streamlit tools (stt)
+import os
+from PIL import Image
+
 from collections import OrderedDict
 from typing import Optional, Tuple
 from ..utils import script_as_module
@@ -102,3 +105,143 @@ def toggle_button(*args, key=None, **kwargs):
         st.error(f"Error occurred: {e}")
 
     return st.session_state[key]
+
+
+def display_image_carousel(image_paths_dict: dict):
+    """
+    Display an image carousel with navigation slider.
+
+    Args:
+        image_paths_dict (dict): Dictionary mapping image titles to their file paths.
+
+    Returns:
+        None
+
+    """
+
+    num_images = len(image_paths_dict)
+    image_titles = list(image_paths_dict.keys())
+
+    # Create a slider for navigation
+    slider_value = st.slider("Select an image", 0, num_images - 1, 0)
+    # Display a slider to select the image index
+
+    # Get the selected image title and path
+    selected_image_title = image_titles[slider_value]
+    selected_image_path = image_paths_dict[selected_image_title]
+    # Retrieve the selected image title and its corresponding file path
+
+    # Load and display the selected image
+    if os.path.exists(selected_image_path):
+        st.write(f"Showing image {slider_value}: '**frame {selected_image_title}**'")
+        # Display the index and title of the selected image
+
+        image = Image.open(selected_image_path)
+        # Open the selected image file
+
+        st.image(image, caption=f'frame {selected_image_title}', use_column_width=True)
+        # Display the image with its caption
+
+    else:
+        st.error(f"Image not found: {selected_image_path}")
+        # Display an error message if the image file is not found
+
+
+
+def video_player(video_filepath, marker_frame_positions=[100, 200, 500, 850, 1100, 1500, 2000, 3000, 4000]):
+    """
+    Create a custom video player with a timeline and markers for specific frames.
+    
+    This function is based on the following blog post: https://blog.streamlit.io/introducing-custom-streamlit-components/
+    and uses the Plyr video player: https://plyr.io/. 
+    NOTE: This function is not currently in Development mode and not fully tested.
+
+    Args:
+        video_filepath (str): Path to the video file.
+        marker_frame_positions (list): List of frame positions to display markers on the timeline. Defaults to a predefined list.
+
+    Returns:
+        None
+    """
+    
+    # Set the page configuration for the Streamlit app
+    # st.set_page_config(page_title="Video Player", page_icon=":film_strip", layout="wide")
+
+    # Display the video timeline heading
+    st.markdown('## Video timeline')
+
+    # Create the custom component using st.expander
+    with st.expander("Show video frames"):
+        st.write("""
+        <link rel="stylesheet" href="https://cdn.plyr.io/3.6.2/plyr.css" />
+        <video id="player" controls crossorigin playsinline>
+            <source src="{}" type="video/mp4" />
+        </video>
+
+        <script src="https://cdn.plyr.io/3.6.2/plyr.js"></script>
+        <script>
+            const player = new Plyr('#player');
+            var timeline = document.getElementById("timeline");
+            var markers = document.getElementsByClassName("marker");
+            var currentFrame = 0;
+            var currentTime = 0;
+            var totalFrames = player.duration * player.fps;
+            var totalTime = player.duration;
+
+            // Create the timeline
+            for (var i = 0; i < totalFrames; i++) {{
+                var tick = document.createElement("div");
+                tick.classList.add("tick");
+                timeline.appendChild(tick);
+            }}
+
+            // Create the markers
+            for (var i = 0; i < {}.length; i++) {{
+                var marker = document.createElement("div");
+                marker.classList.add("marker");
+                marker.setAttribute("data-frame", {}[i]);
+                timeline.appendChild(marker);
+            }}
+
+            // Update the timeline and markers position
+            player.on("timeupdate", event => {{
+                currentFrame = Math.round(event.detail.plyr.currentTime * player.fps);
+                currentTime = event.detail.plyr.currentTime;
+                var minutes = Math.floor(currentTime / 60);
+                var seconds = Math.floor(currentTime - minutes * 60);
+                var time = minutes + ":" + seconds;
+                timeline.style.marginLeft = - currentFrame + "px";
+                for (var i = 0; i < markers.length; i++){{
+                    if (markers[i].getAttribute("data-frame") == currentFrame) {{
+                        markers[i].innerHTML = currentFrame + "("+time+")";
+                    }}
+                }}
+            }});
+        </script>
+        <style>
+            /* Add styles for the timeline and markers here */
+            timeline {{
+                position: relative;
+                width: 100%;
+                height: 20px;
+                overflow: hidden;
+            }}
+            .tick {{
+                position: absolute;
+                width: 1px;
+                height: 20px;
+                background: #ccc;
+            }}
+            .marker {{
+                position:absolute;
+                width: 40px;
+                height: 20px;
+                background: #ff0000;
+                color: #fff;
+                text-align: center;
+                font-size: 12px;
+            }}
+        </style>
+        <div id="timeline"></div>
+        """.format(video_filepath, marker_frame_positions, marker_frame_positions), unsafe_allow_html=True)
+
