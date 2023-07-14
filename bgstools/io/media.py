@@ -7,8 +7,6 @@ import tempfile
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
-
-
 def convert_image_frame(frame, output_path, format='png', compression=False, jpeg_quality=95, tiff_metadata=None):
     """
     Converts an image frame to the specified format (PNG, JPEG, GeoTIFF).
@@ -21,21 +19,12 @@ def convert_image_frame(frame, output_path, format='png', compression=False, jpe
         jpeg_quality (int, optional): The JPEG quality (0-100) if compression is True. Default is 95.
         tiff_metadata (dict, optional): Metadata to be written for GeoTIFF format. Default is None.
 
-    Usage:
-    
-        frame = ...  # Image frame as a NumPy array
-        output_file_png = 'output_frame.png'
-        output_file_jpeg = 'output_frame.jpeg'
-        output_file_tiff = 'output_frame.tif'
-
-        convert_image_frame(frame, output_file_png, format='png')
-        convert_image_frame(frame, output_file_jpeg, format='jpeg', compression=True, jpeg_quality=90)
-        convert_image_frame(frame, output_file_tiff, format='geotiff', tiff_metadata={'Key': 'Value'})
-
+    Raises:
+        ValueError: If the provided format is not supported.
     """
     if format.lower() == 'png':
         cv2.imwrite(output_path, frame)
-    elif format.lower() == 'jpeg' or format.lower() == 'jpg':
+    elif format.lower() in ['jpeg', 'jpg']:
         if compression:
             params = [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality]
             cv2.imwrite(output_path, frame, params)
@@ -43,8 +32,6 @@ def convert_image_frame(frame, output_path, format='png', compression=False, jpe
             cv2.imwrite(output_path, frame)
     else:
         raise ValueError("Unsupported output format: {}".format(format))
-
-
 
 
 def load_big_tiff(path):
@@ -126,15 +113,14 @@ def export_processed_tiff(image, output_path):
 
 
 def is_url(url:str):
-    """Function to check if an url is valid or not
+    """
+    Function to check if an URL is valid or not.
 
     Args:
-        url (_type_): _description_
+        url (str): The URL to check.
 
     Returns:
-        _type_: _description_
-
-    credits: https://github.com/ocean-data-factory-sweden/kso-utils/blob/5aeeb684dd7be86edcc8fbdccac07310f364bba2/tutorials_utils.py
+        bool: True if the URL is valid, False otherwise.
     """
     try:
         result = urlparse(url)
@@ -144,56 +130,41 @@ def is_url(url:str):
 
 
 def get_video_info(video_path: str):
-    """This function takes the path (or url) of a video and returns a dictionary with fps and duration information
+    """
+    This function takes the path (or URL) of a video and returns a dictionary with fps and duration information.
 
     Args:
-        video_path (str): _description_
+        video_path (str): The path (or URL) of the video.
 
     Raises:
-        ValueError: _description_
+        ValueError: If the video doesn't have any frames, or the path/link is incorrect.
 
     Returns:
-        _type_: _description_
+        dict: A dictionary containing video information such as fps, duration, frame count, size, codec, video name, and video path.
     """
-    '''
-    
-    :param video_path: a string containing the path (or url) where the video of interest can be access from
-    :return: Two integers, the fps and duration of the video
-    
-    modified from: https://github.com/ocean-data-factory-sweden/kso-utils/blob/5aeeb684dd7be86edcc8fbdccac07310f364bba2/movie_utils.py
-    '''
-
-    size = 0
     cap = cv2.VideoCapture(video_path)
-    # Check video filesize in relation to its duration
+
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
 
     # prevent issues with missing videos
-    if int(frame_count)|int(fps) == 0:
-        raise ValueError(
-            f"{video_path} doesn't have any frames, check the path/link is correct."
-        )
+    if int(frame_count) | int(fps) == 0:
+        raise ValueError(f"{video_path} doesn't have any frames, check the path/link is correct.")
     else:
         duration = frame_count / fps
 
     duration_mins = duration / 60
 
-    ##### Check codec info ########
+    # Check codec info
     h = int(cap.get(cv2.CAP_PROP_FOURCC))
-    codec = (
-        chr(h & 0xFF)
-        + chr((h >> 8) & 0xFF)
-        + chr((h >> 16) & 0xFF)
-        + chr((h >> 24) & 0xFF)
-    )
+    codec = (chr(h & 0xFF) + chr((h >> 8) & 0xFF) + chr((h >> 16) & 0xFF) + chr((h >> 24) & 0xFF))
   
     # Check if the video is accessible locally
     if os.path.exists(video_path):
         # Store the size of the video
         size = os.path.getsize(video_path)
 
-    # Check if the path to the video is a url
+    # Check if the path to the video is a URL
     elif is_url(video_path):
         # Store the size of the video
         size = urlopen(video_path).length
@@ -203,7 +174,7 @@ def get_video_info(video_path: str):
     size_duration = sizeGB / duration_mins
 
     return {
-        'fps':fps, 
+        'fps': fps, 
         'duration': duration,
         'frame_count': frame_count,
         'duration_mins': duration_mins,
@@ -213,22 +184,33 @@ def get_video_info(video_path: str):
         'codec': codec,
         'video_name': os.path.basename(video_path),
         'video_path': video_path 
-        }
+    }
 
-def extract_frames_every_n_seconds(video_path:str, output_dir:str, n_seconds:int, total_frames:int, fps:float, prefix: str= 'frame', callback:callable= None)->dict:
-    """ Extracts video frames every `n_seconds` and save them in `output_dir` temporary directory.
+
+def extract_frames_every_n_seconds(video_path:str, output_dir:str, n_seconds:int, total_frames:int, fps:float, prefix: str = 'frame', callback:callable = None)->dict:
+    """ 
+    Extracts video frames every `n_seconds` and save them in `output_dir` temporary directory.
 
     Args:
-        video_path (str): _description_
-        output_dir (str): _description_
-        n_seconds (int): _description_
-        total_frames (int): _description_
-        fps (float): _description_
-        prefix (str, optional): _description_. Defaults to 'frame'.
+        video_path (str): Path to the video file.
+        output_dir (str): Directory where the extracted frames will be saved.
+        n_seconds (int): The interval in seconds at which frames should be extracted from the video.
+        total_frames (int): The total number of frames in the video.
+        fps (float): The frame rate of the video (frames per second).
+        prefix (str, optional): The prefix for the saved frame files. Defaults to 'frame'.
+        callback (callable, optional): A callable object (function) that will be called with the status of temporary file deletion. Defaults to None.
 
     Returns:
-        dict: _description_
+        dict: A dictionary where the keys are the frame indices and the values are the corresponding frame file paths.
     """
+    
+    # Check if the video file exists
+    if video_path is None or not os.path.isfile(video_path):
+        raise ValueError(f"Video file not found: {video_path}")
+
+    # Check if output directory exists, if not create it
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
 
     temp_frames = {}
     step = int(n_seconds*fps)
@@ -246,33 +228,36 @@ def extract_frames_every_n_seconds(video_path:str, output_dir:str, n_seconds:int
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
-        
         subprocess.call(['ffmpeg', '-i', video_path, '-vf', 'select=gt(n\,{})'.format(i-1), '-pix_fmt', 'yuv420p', '-vframes', '1', '-f', 'image2', temp_file_path]) 
         temp_frames[i] = temp_file_path
     
-    #
+    # Remove the temporary files
     if callback is not None:
         try:
             removed =  [os.remove(file) for file in delete_temp_files]
         except Exception as e:
-            callback(f'BGSTOOLS>MEDIA: Error removing temporary files: {e}')
-            raise IOError(f'BGSTOOLS>MEDIA: Error removing temporary files: {e}')
+            callback(f'Error removing temporary files: {e}')
+            raise IOError(f'Error removing temporary files: {e}')
         else:
-            callback('BGSTOOLS>MEDIA: Temporary files removed successfully')
+            callback('Temporary files removed successfully')
 
     return temp_frames
 
 
 def select_random_frames(frames:dict, num_frames:int = 10):
-    """Randomly selects `num_frames` from the `frames` dictionary
+    """
+    Randomly selects `num_frames` from the `frames` dictionary
 
     Args:
-        frames (dict): video frames dictionary. Keys as frame number and values contain the filepath of the temporal frames
-        num_frames (int): number of frames to sample. Defaults to 10.
+        frames (dict): Video frames dictionary. Keys are frame numbers and values contain the filepath of the temporal frames.
+        num_frames (int): Number of frames to sample. Defaults to 10.
 
     Returns:
-        dict:  Keys as frame number and values contain the filepath of the sampled temporal frames.
+        dict: Dictionary where keys are frame numbers and values are filepaths of the sampled temporal frames.
     """
+    if num_frames > len(frames):
+        raise ValueError("Number of frames to select is greater than the available frames")
+
     selected_keys = random.sample(frames.keys(), num_frames)
     return {key:frames[key] for key in selected_keys}
 
@@ -282,16 +267,14 @@ def convert_codec(input_file, output_file, callback:callable=None)->bool:
     Converts video codec from 'hvc1' to 'h264' using FFmpeg.
     This function requires FFmpeg to be installed and in PATH.
 
-
     Args:
         input_file (str): The path to the input video file.
         output_file (str): The path to the output video file.
         callback (callable, optional): A callback function to report progress. Defaults to None.
     
     Returns:
-        True if successful else False
+        bool: True if successful else False
     """
-
     # Check if FFmpeg is installed
     try:
         subprocess.run(['ffmpeg', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
@@ -318,17 +301,18 @@ def convert_codec(input_file, output_file, callback:callable=None)->bool:
         callback(message)        
         return False
     else:
-        
         return True
 
 
-def extract_frames(video_filepath, frames_dirpath, callback: callable = None):
+
+def extract_frames(video_filepath: str, frames_dirpath: str,  n_seconds: int = 5,  callback: callable = None):
     """
-    Extract frames from a video file and save them to a specified directory.
+    Extract frames from a video file and save them to a specified directory every n seconds.
 
     Args:
         video_filepath (str): Path to the video file.
         frames_dirpath (str): Directory where the extracted frames will be saved.
+        n_seconds (int, optional): The interval in seconds at which frames should be extracted from the video. Defaults to 5.
         callback (callable, optional): A callable object (function) that will be called with the video_info dictionary.
                                        Defaults to None.
 
@@ -336,30 +320,32 @@ def extract_frames(video_filepath, frames_dirpath, callback: callable = None):
         list or None: List of temporary frame paths if frames were extracted and saved successfully. None otherwise.
     """
 
-    if video_filepath is not None and os.path.isfile(video_filepath):
-        # Check if the video file exists
+    # Check if the video file exists
+    if video_filepath is None or not os.path.isfile(video_filepath):
+        raise ValueError(f"Video file not found: {video_filepath}")
 
-        video_info = get_video_info(video_path=video_filepath)
-        # Get information about the video using the 'get_video_info' function
+    # Get information about the video using the 'get_video_info' function
+    video_info = get_video_info(video_path=video_filepath)
 
-        if callback is not None:
-            callback(video_info)
-        # Call the 'callback' function (if provided) with the video_info dictionary
+    # Call the 'callback' function (if provided) with the video_info dictionary
+    if callback is not None:
+        callback(video_info)
 
-        temp_frames = extract_frames_every_n_seconds(
-            video_path=video_filepath,
-            output_dir=frames_dirpath,
-            n_seconds=5,
-            total_frames=video_info['frame_count'],
-            fps=video_info['fps']
-        )
-        # Extract frames from the video using the 'extract_frames_every_n_seconds' function
-        # and save them to the specified frames_dirpath
+    # Extract frames from the video using the 'extract_frames_every_n_seconds' function
+    # and save them to the specified frames_dirpath
+    temp_frames = extract_frames_every_n_seconds(
+        video_path=video_filepath,
+        output_dir=frames_dirpath,
+        n_seconds=n_seconds,
+        total_frames=video_info['frame_count'],
+        fps=video_info['fps']
+    )
 
-        if temp_frames:
-            return temp_frames
-        # If frames were extracted and saved successfully, return the temporary frames
+    # If frames were extracted and saved successfully, return the temporary frames
+    if not temp_frames:
+        raise Exception(f'Error extracting frames from video: {video_filepath} to {frames_dirpath}. `temp_frames`: {temp_frames}')
 
+    return temp_frames
 
 
 def load_video(filepath: str) -> bytes:
@@ -370,22 +356,10 @@ def load_video(filepath: str) -> bytes:
         filepath (str): Path to the video file.
 
     Returns:
-        bytes: The content of the video file as bytes.
-
-    Raises:
-        FileNotFoundError: If the specified file does not exist.
-        AssertionError: If the filepath is not a file.
-
+        bytes: The video content as bytes.
     """
-    assert os.path.isfile(filepath), "File not found: {}".format(filepath)
-    # Check if the filepath points to a valid file
+    if not os.path.isfile(filepath):
+        raise ValueError(f"File not found: {filepath}")
 
-    try:
-        with open(filepath, 'rb') as video_file:
-            video_bytes = video_file.read()
-            # Read the content of the video file as bytes
-            return video_bytes
-
-    except IOError as e:
-        raise IOError("Error loading video file: {}".format(e))
-        # Raise an IOError if there's an error reading the video file
+    with open(filepath, 'rb') as file:
+        return file.read()
