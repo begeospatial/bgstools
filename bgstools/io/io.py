@@ -5,7 +5,7 @@ from collections import OrderedDict
 import requests
 import toml
 from pathlib import Path
-
+from typing import Callable, Optional
 
 def get_files_dictionary(dirpath: str, file_extension: str, keep_extension_in_key:bool = False) -> dict:
     """
@@ -42,15 +42,14 @@ def create_directory_list(dirpath: str) -> list:
     """
     Creates a list of directories within a given directory, excluding files.
 
-    Parameters:
-    - dirpath: The path of the directory.
+    Args:
+        dirpath (str): The path of the directory.
 
     Returns:
-    - A list of directories within the given directory.
+        list: A list of directories within the given directory.
 
     Raises:
-    - OSError: If there is an error accessing the directory.
-
+        OSError: If there is an error accessing the directory.
     """
     try:
         directories = []
@@ -61,22 +60,21 @@ def create_directory_list(dirpath: str) -> list:
         return directories
     except OSError as e:
         raise OSError(f"Error accessing directory: {e}")
-    
-    
+
+
 def create_file_list_with_extension(dirpath: str, extension: str) -> list:
     """
     Creates a list of files within a given directory, filtered by file extension.
 
-    Parameters:
-    - dirpath: The path of the directory.
-    - extension: The file extension to filter by (e.g., ".txt", ".csv").
+    Args:
+        dirpath (str): The path of the directory.
+        extension (str): The file extension to filter by (e.g., ".txt", ".csv").
 
     Returns:
-    - A list of file paths within the given directory that match the specified file extension.
+        list: A list of file paths within the given directory that match the specified file extension.
 
     Raises:
-    - OSError: If there is an error accessing the directory.
-
+        OSError: If there is an error accessing the directory.
     """
     try:
         files = []
@@ -93,14 +91,12 @@ def check_dirpath_owner(dirpath: str):
     """
     Checks the ownership of a directory.
 
-    Parameters:
-    - dirpath: The path of the directory to check ownership for.
+    Args:
+        dirpath (str): The path of the directory to check ownership for.
 
     Returns:
-    - A dictionary containing the owner and group of the directory if it exists, otherwise an empty dictionary.
-
+        dict: A dictionary containing the owner and group of the directory if it exists, otherwise an empty dictionary.
     """
-
     path = Path(dirpath)
 
     if path.exists():
@@ -109,23 +105,20 @@ def check_dirpath_owner(dirpath: str):
         return {}
 
 
-
 def check_directory_exist_and_writable(dirpath, callback=None):
     """
     Checks if a directory exists and if it is writable.
 
-    Parameters:
-    - dirpath: The path of the directory to be checked.
-    - callback (optional): A callback function to be executed after checking the directory,
-      used to deliver message of success.
-   
+    Args:
+        dirpath (str): The path of the directory to be checked.
+        callback (Optional[Callable[[str], None]], optional): A callback function 
+        to be executed after checking the directory. The callback function 
+        should accept a single string argument, which will be a status message.
 
     Returns:
-    - success: Boolean indicating if the directory exists and is writable (True), exists but not writable (False),
-               or doesn't exist (None).
-
+        success (Optional[bool]): True if the directory exists and is writable,
+        False if the directory exists but is not writable, None if the directory doesn't exist.
     """
-
     success = None
     message = None
 
@@ -155,45 +148,54 @@ def check_directory_exist_and_writable(dirpath, callback=None):
     return success
 
 
-def create_new_directory(dirpath,callback:callable=None):
+def create_new_directory(dirpath, callback: Optional[Callable[[str], None]] = None):
     """
     Creates a new directory if it does not exist already.
 
-    Parameters:
-    - dirpath: The path of the directory to be created.
-    - callback (optional): A callback function to be executed after directory creation.
+    Args:
+        dirpath (str): The path of the directory to be created.
+        callback (Optional[Callable[[str], None]], optional): A callback function 
+        to be executed after directory creation. The callback function 
+        should accept a single string argument, which will be a status message.
 
     Returns:
-    - The path of the directory.
+        str: The path of the directory.
 
     Raises:
-    - OSError: If there is an error while creating the directory.
-
+        OSError: If there is an error while creating the directory.
     """
     try:
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)  # Create the directory if it doesn't exist
             message = f"The directory {dirpath} was created."
         else:
-            message(f"The directory {dirpath} already exists.")
+            message = f"The directory {dirpath} already exists."
     
     except OSError as e:
         raise OSError(f"Error creating directory: {e}")
     
     if callback:
         callback(message)
+    
     return dirpath
 
 
-def create_subdirectory(directory: str, subdirectory: str, callback: callable = None) -> str:
+def create_subdirectory(directory: str, subdirectory: str, callback: Optional[Callable[[str], None]] = None) -> str:
     """
-    Check if a subdirectory exists within a given directory.
-    If the subdirectory doesn't exist, create it.
+    Check if a subdirectory exists within a given directory and create it if it doesn't exist.
+    
+    The function raises exceptions if the provided directory path is invalid or 
+    if there's an error while creating the subdirectory. After the subdirectory is 
+    successfully created or if it already exists, a callback function can be executed 
+    with a status message as its argument.
 
     Args:
         directory (str): Path to the directory to check/create the subdirectory in.
         subdirectory (str): Name of the subdirectory to check/create.
-        callback (callable, optional): A callback function to be executed after creating the subdirectory.
+        callback (Optional[Callable[[str], None]], optional): A callback function 
+        to be executed after creating the subdirectory. The callback function 
+        should accept a single string argument, which will be a status message.
+        Defaults to None.
 
     Returns:
         str: The full path to the subdirectory.
@@ -215,7 +217,7 @@ def create_subdirectory(directory: str, subdirectory: str, callback: callable = 
             message = f"Subdirectory '{subdirectory}' already exists in '{directory}'."
     except OSError as e:
         message = f"Error while creating the subdirectory: {str(e)}"
-        raise OSError(message)
+        raise OSError(message) from e
 
     if callback:
         callback(message)
@@ -223,7 +225,7 @@ def create_subdirectory(directory: str, subdirectory: str, callback: callable = 
     return subdirectory_path
 
 
-def load_toml_variables(file_path):
+def load_toml_variables(file_path: str) -> dict:
     """
     Load variables from a .toml file into a dictionary.
 
@@ -232,17 +234,20 @@ def load_toml_variables(file_path):
 
     Returns:
         dict: Dictionary containing the loaded variables.
+
+    Raises:
+        IOError: If there is an error while loading the .toml file.
     """
     try:
         with open(file_path, "r") as file:
             data = toml.load(file)
             return data
     except IOError:
-        print(f"Error: Unable to load .toml file from {file_path}")
+        raise IOError(f"Error: Unable to load .toml file from {file_path}")
         return {}
 
 
-def load_yaml(filepath: str, file = None) -> dict:
+def load_yaml(filepath: str) -> dict:
     """
     Loads a YAML file.
 
@@ -286,14 +291,14 @@ def load_yaml_from_file(file):
     """
     Loads YAML data from a file object.
 
-    Parameters:
-    - file: The file object representing the YAML file.
+    Args:
+        file: The file object representing the YAML file.
 
     Returns:
-    - The loaded YAML data.
+        dict: The loaded YAML data.
 
     Raises:
-    - yaml.YAMLError: If there is an error while loading the YAML data from the file.
+        yaml.YAMLError: If there is an error while loading the YAML data from the file.
     """
     try:
         yaml_data = yaml.safe_load(file)
@@ -331,22 +336,23 @@ def get_available_services(services_filepath: str) -> OrderedDict:
     return None
 
 
-def path_exists(path):
+def path_exists(path, path_type):
     """
     Checks if a given path exists, whether it's a local file, remote URL, or LAN path.
 
     Args:
         path (str): The path to check.
+        path_type (str): The type of the path. It can be "local", "remote", or "lan".
 
     Returns:
         bool: True if the path exists, False otherwise.
     """
-    if is_remote_url(path):
-        return check_remote_path_exists(path)
-    elif is_lan_path(path):
-        return check_lan_path_exists(path)
+    if path_type == "remote":
+        return is_remote_url(path)
+    elif path_type == "lan":
+        return is_lan_path(path)
     else:
-        return check_local_path_exists(path)
+        return os.path.exists(path)
 
 
 def is_remote_url(path):
@@ -372,47 +378,4 @@ def is_lan_path(path):
     Returns:
         bool: True if the path is a LAN path, False otherwise.
     """
-    return path.startswith('\\\\')
-
-
-def check_remote_path_exists(url):
-    """
-    Checks if the given remote URL exists.
-
-    Args:
-        url (str): The URL to check.
-
-    Returns:
-        bool: True if the URL exists, False otherwise.
-    """
-    try:
-        response = requests.head(url)
-        return response.status_code == requests.codes.ok
-    except requests.exceptions.RequestException:
-        return False
-
-
-def check_lan_path_exists(path):
-    """
-    Checks if the given LAN path exists.
-
-    Args:
-        path (str): The path to check.
-
-    Returns:
-        bool: True if the path exists, False otherwise.
-    """
-    return os.path.exists(path)
-
-
-def check_local_path_exists(path):
-    """
-    Checks if the given local path exists.
-
-    Args:
-        path (str): The path to check.
-
-    Returns:
-        bool: True if the path exists, False otherwise.
-    """
-    return os.path.exists(path)
+    return path.startswith(os.sep + os.sep)
