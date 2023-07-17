@@ -7,6 +7,50 @@ import toml
 from pathlib import Path
 from typing import Callable, Optional
 
+
+
+def check_or_create_subdirectory(directory: str, subdirectory: str, callback: Callable[[str], None]) -> None:
+    """
+    Checks if a subdirectory exists within a specified directory. If the subdirectory does not exist, it is created.
+    The callback function is then called with a message indicating whether the subdirectory was created or already existed.
+    
+    Args:
+        directory (str): The absolute or relative path of the parent directory.
+        subdirectory (str): The name of the subdirectory to be checked/created.
+        callback (Callable[[str], None]): A callback function that accepts a string message as an argument. 
+                                          This function is called after the check/create operation with a message 
+                                          indicating whether the subdirectory was created or already existed.
+        
+    Returns:
+        None
+        
+    Raises:
+        OSError: If the directory cannot be created due to a system-related error (like lack of permissions, 
+                 or the parent directory not existing)
+    
+    Usage:
+        def callback_function(message: str) -> None:
+            print(message)
+
+        check_or_create_subdirectory('/path/to/directory', 'new_subdirectory', callback_function)
+
+    """
+    try:
+        subdirectory_path = os.path.join(directory, subdirectory)
+        os.makedirs(subdirectory_path, exist_ok=True)
+        
+        if os.path.isdir(subdirectory_path):
+            callback(f"The subdirectory '{subdirectory}' already exists at: {subdirectory_path}")
+        else:
+            callback(f"The subdirectory '{subdirectory}' was created at: {subdirectory_path}")
+    except OSError as e:
+        callback(f"Could not create the subdirectory '{subdirectory}' at: {subdirectory_path}. Error: {str(e)}")
+
+
+def callback_function(message: str) -> None:
+    print(message)
+
+
 def get_files_dictionary(dirpath: str, file_extension: str, keep_extension_in_key:bool = False) -> dict:
     """
     Recursively search for files with the specified `file_extension` in the given `dirpath` and return a dictionary
@@ -182,6 +226,8 @@ def create_new_directory(dirpath, callback: Optional[Callable[[str], None]] = No
 
 def create_subdirectory(directory: str, subdirectory: str, callback: Optional[Callable[[str], None]] = None) -> str:
     """
+    **depreciation warning**: Use check_or_create_subdirectory instead.
+    
     Check if a subdirectory exists within a given directory and create it if it doesn't exist.
     
     The function raises exceptions if the provided directory path is invalid or 
