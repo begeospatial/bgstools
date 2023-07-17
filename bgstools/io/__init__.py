@@ -7,4 +7,4 @@ from .io import load_yaml, get_available_services, \
 
 from .media import VideoLoader, export_processed_tiff, is_url, get_video_info, convert_image_frame, \
     load_big_tiff,  export_processed_tiff, extract_frames_every_n_seconds, select_random_frames, convert_codec, \
-    extract_frames, load_video
+    extract_frames, load_video, calculate_frames

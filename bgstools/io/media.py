@@ -187,9 +187,44 @@ def get_video_info(video_path: str):
     }
 
 
+def calculate_frames(duration_in_seconds:int, start_time_in_seconds:int, fps:float, n_seconds:int) -> int:
+    """ 
+    Calculates the number of frames that will be extracted from a video given its duration, start time, frame rate, and the interval at which frames will be extracted.
+
+    Args:
+        duration_in_seconds (int): The duration of the video in seconds.
+        start_time_in_seconds (int): The start time in seconds from which frames should be extracted.
+        fps (float): The frame rate of the video (frames per second).
+        n_seconds (int): The interval in seconds at which frames should be extracted from the video.
+
+    Returns:
+        int: The number of frames that will be extracted.
+
+    Raises:
+        ValueError: If the calculated number of frames is less than 10.
+    """
+    # Calculate the total number of frames in the video
+    total_frames = duration_in_seconds * fps
+
+    # Calculate the starting frame
+    start_frame = start_time_in_seconds * fps
+
+    # Calculate the number of frames that will be extracted
+    step = n_seconds * fps
+    num_frames = (total_frames - start_frame) // step
+
+    # Check if the calculated number of frames is less than 10
+    if num_frames < 10:
+        raise ValueError("The calculated number of frames is less than 10. Please adjust the input parameters.")
+
+    return num_frames
+
+
+
+
 def extract_frames_every_n_seconds(video_path:str, output_dir:str, n_seconds:int, total_frames:int, fps:float, prefix: str = 'frame', callback:callable = None)->dict:
     """ 
-    Extracts video frames every `n_seconds` and save them in `output_dir` temporary directory.
+    Extracts video frames every `n_seconds` from a video and saves them in `output_dir`.
 
     Args:
         video_path (str): Path to the video file.
@@ -198,54 +233,45 @@ def extract_frames_every_n_seconds(video_path:str, output_dir:str, n_seconds:int
         total_frames (int): The total number of frames in the video.
         fps (float): The frame rate of the video (frames per second).
         prefix (str, optional): The prefix for the saved frame files. Defaults to 'frame'.
-        callback (callable, optional): A callable object (function) that will be called with the status of temporary file deletion. Defaults to None.
+        callback (callable, optional): A function that will be called with the status of temporary file deletion. Defaults to None.
 
     Returns:
         dict: A dictionary where the keys are the frame indices and the values are the corresponding frame file paths.
     """
     
     # Check if the video file exists
-    if video_path is None or not os.path.isfile(video_path):
+    if not os.path.isfile(video_path):
         raise ValueError(f"Video file not found: {video_path}")
 
     # Check if output directory exists, if not create it
-    if not os.path.isdir(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
-    temp_frames = {}
+    frames_dict = {}
     step = int(n_seconds*fps)
     delete_temp_files = []
     for i in range(0, total_frames, step):
-        temp_frames[i] = []
         temp_file_descriptor, temp_file_path = tempfile.mkstemp(prefix=f'{prefix.strip().replace(" ", "_")}%06d_' % i, suffix=f'.png', dir=output_dir)
         os.close(temp_file_descriptor)
         delete_temp_files.append(temp_file_path)
-        temp_file_name = os.path.basename(temp_file_path)
-        temp_dir_path = os.path.dirname(temp_file_path)
-        file_name = f"{temp_file_name.split('_')[0]}.png"
-        temp_file_path = os.path.join(temp_dir_path, file_name)
 
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
-
-        subprocess.call(['ffmpeg', '-i', video_path, '-vf', 'select=gt(n\,{})'.format(i-1), '-pix_fmt', 'yuv420p', '-vframes', '1', '-f', 'image2', temp_file_path]) 
-        temp_frames[i] = temp_file_path
+        subprocess.call(['ffmpeg', '-i', video_path, '-vf', 'select=gt(scene\,{})'.format(i/step), '-pix_fmt', 'rgb24', '-vframes', '1', '-f', 'image2', temp_file_path])     # yuv420p changed by 'rgb24' to avoid error with FRAMES PNG creation as pixel format was incompatible
+        frames_dict[i] = temp_file_path
     
     # Remove the temporary files
     message = 'Removing temporary files'
     try:
-        removed =  [os.remove(file) for file in delete_temp_files]
+        [os.remove(file) for file in delete_temp_files]
     except Exception as e:
-        message(f'Error removing temporary files: {e}')
+        message = f'Error removing temporary files: {e}'
+        if callback is not None:
+            callback(message)
         raise IOError(f'Error removing temporary files: {e}')
     else:
-        message('Temporary files removed successfully')
+        message = 'Temporary files removed successfully'
+        if callback is not None:
+            callback(message)
 
-    if callback is not None:
-        callback(message)
-        
-
-    return temp_frames
+    return frames_dict
 
 
 def select_random_frames(frames:dict, num_frames:int = 10):
