@@ -4,6 +4,7 @@ import random
 import numpy as np
 import subprocess 
 import tempfile
+import json
 from urllib.parse import urlparse
 from urllib.request import urlopen
 
@@ -221,24 +222,22 @@ def calculate_frames(duration_in_seconds:int, start_time_in_seconds:int, fps:flo
 
 
 
-
-def extract_frames_every_n_seconds(video_path:str, output_dir:str, n_seconds:int, total_frames:int, fps:float, prefix: str = 'frame', callback:callable = None)->dict:
+def extract_frames_every_n_seconds(video_path:str, output_dir:str, prefix:str, n_seconds:int, start_time: int, callback:callable = None) -> dict:
     """ 
-    Extracts video frames every `n_seconds` from a video and saves them in `output_dir`.
+    Extracts video frames every `n_seconds` from a video starting from `start_time` and saves them in `output_dir`.
 
     Args:
         video_path (str): Path to the video file.
         output_dir (str): Directory where the extracted frames will be saved.
+        prefix (str): Prefix to be used for the frame file names.         
         n_seconds (int): The interval in seconds at which frames should be extracted from the video.
-        total_frames (int): The total number of frames in the video.
         fps (float): The frame rate of the video (frames per second).
-        prefix (str, optional): The prefix for the saved frame files. Defaults to 'frame'.
-        callback (callable, optional): A function that will be called with the status of temporary file deletion. Defaults to None.
+        start_time (int): The start time in seconds from which frame extraction should begin.
+        callback (callable, optional): A function that will be called after every frame extraction. Defaults to None.
 
     Returns:
-        dict: A dictionary where the keys are the frame indices and the values are the corresponding frame file paths.
+        dict: A dictionary where the keys are the timestamps and the values are the corresponding frame file paths.
     """
-    
     # Check if the video file exists
     if not os.path.isfile(video_path):
         raise ValueError(f"Video file not found: {video_path}")
@@ -247,27 +246,26 @@ def extract_frames_every_n_seconds(video_path:str, output_dir:str, n_seconds:int
     os.makedirs(output_dir, exist_ok=True)
 
     frames_dict = {}
-    step = int(n_seconds*fps)
-    delete_temp_files = []
-    for i in range(0, total_frames, step):
-        temp_file_descriptor, temp_file_path = tempfile.mkstemp(prefix=f'{prefix.strip().replace(" ", "_")}%06d_' % i, suffix=f'.png', dir=output_dir)
-        os.close(temp_file_descriptor)
-        delete_temp_files.append(temp_file_path)
+    step = n_seconds
 
-        subprocess.call(['ffmpeg', '-i', video_path, '-vf', 'select=gt(scene\,{})'.format(i/step), '-pix_fmt', 'rgb24', '-vframes', '1', '-f', 'image2', temp_file_path])     # yuv420p changed by 'rgb24' to avoid error with FRAMES PNG creation as pixel format was incompatible
-        frames_dict[i] = temp_file_path
+    # Get the total duration of the video in seconds
+    cmd = ['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'json', video_path]
+    output = subprocess.check_output(cmd).decode('utf-8')
+    duration = json.loads(output)['format']['duration']
+
+    # Ensure that the start time is not greater than the total duration of the video
+    if start_time > duration:
+        raise ValueError(f"Start time {start_time} exceeds video duration {duration}")
+
+    for i in range(start_time, int(duration), step):
+        # Formatted time with leading zeros
+        time_str = str(i).zfill(5)
+        frame_file_path = os.path.join(output_dir, f'{prefix}{time_str}.png')
+        subprocess.call(['ffmpeg', '-ss', str(i), '-i', video_path, '-frames:v', '1', frame_file_path])    
+
+        frames_dict[time_str] = frame_file_path
     
-    # Remove the temporary files
-    message = 'Removing temporary files'
-    try:
-        [os.remove(file) for file in delete_temp_files]
-    except Exception as e:
-        message = f'Error removing temporary files: {e}'
-        if callback is not None:
-            callback(message)
-        raise IOError(f'Error removing temporary files: {e}')
-    else:
-        message = 'Temporary files removed successfully'
+        message = f'Frame extracted at {i} seconds'
         if callback is not None:
             callback(message)
 
@@ -335,25 +333,33 @@ def convert_codec(input_file, output_file, callback:callable=None)->bool:
 
 
 
-def extract_frames(video_filepath: str, frames_dirpath: str,  n_seconds: int = 5,  callback: callable = None):
+
+def extract_frames(video_filepath: str, frames_dirpath: str, start_time_in_seconds:int = 1, n_seconds: int = 5,  callback: callable = None, kwargs: dict = None):
     """
-    Extract frames from a video file and save them to a specified directory every n seconds.
+    Extract frames from a video file and save them to a specified directory every n seconds starting from a specific time in seconds.
 
     Args:
         video_filepath (str): Path to the video file.
         frames_dirpath (str): Directory where the extracted frames will be saved.
+        
+        start_time_in_seconds (int, optional): The time in seconds from where frames should be extracted. Defaults to 1.
         n_seconds (int, optional): The interval in seconds at which frames should be extracted from the video. Defaults to 5.
-        callback (callable, optional): A callable object (function) that will be called with the video_info dictionary.
-                                       Defaults to None.
+        callback (callable, optional): A callable object (function) that will be called with the video_info dictionary. Defaults to None.
+        **kwargs (dict): Additional arguments as key-value pairs. Defaults to None. Dictionary keys: 'survey_name', 'station_name'. 
+            example of kwargs:  {survey_name (str): The name of the survey. , 
+                                station_name (str): The name of the station.}
 
     Returns:
-        list or None: List of temporary frame paths if frames were extracted and saved successfully. None otherwise.
+        dict or None: Dictionary mapping from each second mark (for which a frame is extracted) to the corresponding frame file path. None if frame extraction failed.
     """
-
     # Check if the video file exists
     if video_filepath is None or not os.path.isfile(video_filepath):
         raise ValueError(f"Video file not found: {video_filepath}")
 
+    survey_name = kwargs.get('survey_name')
+    station_name = kwargs.get('station_name')
+
+ 
     # Get information about the video using the 'get_video_info' function
     video_info = get_video_info(video_path=video_filepath)
 
@@ -361,21 +367,31 @@ def extract_frames(video_filepath: str, frames_dirpath: str,  n_seconds: int = 5
     if callback is not None:
         callback(video_info)
 
+    # Extract the video_name from the video_filepath
+    video_filename = os.path.basename(video_filepath)
+    video_name, _ = os.path.splitext(video_filename)
+
+    # Generate prefix string, conditionally including survey and station names
+    prefix = f"{survey_name + '_' if survey_name else ''}{station_name + '_' if station_name else ''}{video_name}_frame_"
+
+
     # Extract frames from the video using the 'extract_frames_every_n_seconds' function
     # and save them to the specified frames_dirpath
-    temp_frames = extract_frames_every_n_seconds(
+    frames_dict = extract_frames_every_n_seconds(
         video_path=video_filepath,
         output_dir=frames_dirpath,
+        prefix=prefix,
+        video_name=video_name,
         n_seconds=n_seconds,
-        total_frames=video_info['frame_count'],
-        fps=video_info['fps']
+        fps=video_info['fps'],
+        start_time=start_time_in_seconds
     )
 
-    # If frames were extracted and saved successfully, return the temporary frames
-    if not temp_frames:
-        raise Exception(f'Error extracting frames from video: {video_filepath} to {frames_dirpath}. `temp_frames`: {temp_frames}')
+    # If frames were extracted and saved successfully, return the frames_dict
+    if not frames_dict:
+        raise Exception(f'Error extracting frames from video: {video_filepath} to {frames_dirpath}. `frames_dict`: {frames_dict}')
 
-    return temp_frames
+    return frames_dict
 
 
 def load_video(filepath: str) -> bytes:
