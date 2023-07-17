@@ -232,14 +232,18 @@ def extract_frames_every_n_seconds(video_path:str, output_dir:str, n_seconds:int
         temp_frames[i] = temp_file_path
     
     # Remove the temporary files
+    message = 'Removing temporary files'
+    try:
+        removed =  [os.remove(file) for file in delete_temp_files]
+    except Exception as e:
+        message(f'Error removing temporary files: {e}')
+        raise IOError(f'Error removing temporary files: {e}')
+    else:
+        message('Temporary files removed successfully')
+
     if callback is not None:
-        try:
-            removed =  [os.remove(file) for file in delete_temp_files]
-        except Exception as e:
-            callback(f'Error removing temporary files: {e}')
-            raise IOError(f'Error removing temporary files: {e}')
-        else:
-            callback('Temporary files removed successfully')
+        callback(message)
+        
 
     return temp_frames
 
