@@ -284,7 +284,7 @@ def convert_codec(input_file, output_file, callback:callable=None)->bool:
         return True
 
 
-def extract_frames_every_n_seconds(video_filepath:str, frames_dirpath:str, prefix:str, n_seconds:int, start_time_in_seconds: int, callback:callable = None) -> dict:
+def extract_frames_every_n_seconds(video_filepath:str, frames_dirpath:str, prefix:str, n_seconds:int, start_time_in_seconds: int) -> dict:
     """ 
     Extracts video frames every `n_seconds` from a video starting from `start_time` and saves them in `output_dir`.
 
@@ -294,8 +294,7 @@ def extract_frames_every_n_seconds(video_filepath:str, frames_dirpath:str, prefi
         prefix (str): Prefix to be used for the frame file names.         
         n_seconds (int): The interval in seconds at which frames should be extracted from the video.
         fps (float): The frame rate of the video (frames per second).
-        start_time_in_seconds (int): The start time in seconds from which frame extraction should begin.
-        callback (callable, optional): A function that will be called after every frame extraction. Defaults to None.
+        start_time_in_seconds (int): The start time in seconds from which frame extraction should begin.        
 
     Returns:
         dict: A dictionary where the keys are the timestamps and the values are the corresponding frame file paths.
@@ -323,15 +322,14 @@ def extract_frames_every_n_seconds(video_filepath:str, frames_dirpath:str, prefi
         # Formatted time with leading zeros
         time_str = str(i).zfill(6)
         frame_file_path = os.path.join(frames_dirpath, f'{prefix}_{time_str}_sec.png')
-        subprocess.call(['ffmpeg', '-ss', str(i), '-i', video_filepath, '-frames:v', '1', frame_file_path])    
-
-        frames_dict[str(time_str)] = frame_file_path
-        frames_dict[f"SEC_{time_str}"] = frame_file_path
+        try:
+            subprocess.call(['ffmpeg', '-ss', str(i), '-i', video_filepath, '-frames:v', '1', frame_file_path])
+        except Exception as e:
+            message = f'Error extracting frames at {i} seconds. Exception: {e}'
+            raise Exception(message)
+        else:
+            frames_dict[f"SEC_{time_str}"] = frame_file_path
     
-        message = f'Frame extracted at {i} seconds'
-        if callback is not None:
-            callback(message)
-
     return frames_dict
 
 
