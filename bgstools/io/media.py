@@ -321,11 +321,12 @@ def extract_frames_every_n_seconds(video_filepath:str, frames_dirpath:str, prefi
 
     for i in range(start_time_in_seconds, int(duration), step):
         # Formatted time with leading zeros
-        time_str = str(i).zfill(5)
+        time_str = str(i).zfill(6)
         frame_file_path = os.path.join(frames_dirpath, f'{prefix}_{time_str}_sec.png')
         subprocess.call(['ffmpeg', '-ss', str(i), '-i', video_filepath, '-frames:v', '1', frame_file_path])    
 
         frames_dict[str(time_str)] = frame_file_path
+        frames_dict[f"SEC_{time_str}"] = frame_file_path
     
         message = f'Frame extracted at {i} seconds'
         if callback is not None:
