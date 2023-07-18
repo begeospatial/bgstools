@@ -221,9 +221,6 @@ def calculate_frames(duration_in_seconds:int, start_time_in_seconds:int, fps:flo
     return num_frames
 
 
-
-
-
 def select_random_frames(frames:dict, num_frames:int = 10):
     """
     Randomly selects `num_frames` from the `frames` dictionary
@@ -238,8 +235,8 @@ def select_random_frames(frames:dict, num_frames:int = 10):
     if num_frames > len(frames):
         raise ValueError("Number of frames to select is greater than the available frames")
 
-    selected_keys = random.sample(frames.keys(), num_frames)
-    return {key:frames[key] for key in selected_keys}
+    selected_keys = random.sample(sorted(frames.keys()), num_frames)
+    return {key:frames[key] for key in sorted(selected_keys)}
 
 
 def convert_codec(input_file, output_file, callback:callable=None)->bool:
