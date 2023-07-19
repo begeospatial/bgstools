@@ -130,7 +130,7 @@ def display_image_carousel(image_paths_dict: dict):
     selected_image_title = image_titles[slider_value]
     selected_image_path = image_paths_dict[selected_image_title]
     #
-    FRAME_NUMBER = {str(slider_value).zfill(2)}
+    FRAME_NUMBER = str(int(slider_value) + 1).zfill(2)
 
     # Load and display the selected image
     if os.path.exists(selected_image_path):
