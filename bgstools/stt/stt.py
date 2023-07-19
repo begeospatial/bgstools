@@ -122,15 +122,20 @@ def display_image_carousel(image_paths_dict: dict):
     num_images = len(image_paths_dict)
     image_titles = list(image_paths_dict.keys())
 
-    # Create a slider for navigation
-    slider_value = st.slider("Select an frame", 0, num_images - 1, 0)
-    # Display a slider to select the image index
+    col1, _ = st.columns([2,1])
+    with col1:            
+        # Create a slider for navigation
+        slider_value = st.slider(label= "Select a frame:",  
+                                min_value=1,  
+                                max_value=num_images,  
+                                value=1)
+        # Display a slider to select the image index
 
-    # Get the selected image title and path
-    selected_image_title = image_titles[slider_value]
-    selected_image_path = image_paths_dict[selected_image_title]
-    #
-    FRAME_NUMBER = str(int(slider_value) + 1).zfill(2)
+        # Get the selected image title and path
+        selected_image_title = image_titles[slider_value - 1]
+        selected_image_path = image_paths_dict[selected_image_title]
+        #
+        FRAME_NUMBER = str(slider_value).zfill(2)
 
     # Load and display the selected image
     if os.path.exists(selected_image_path):
