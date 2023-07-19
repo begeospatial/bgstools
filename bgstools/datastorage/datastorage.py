@@ -184,4 +184,110 @@ def update_datastore(DATASTORE: DataStore, kwargs: Dict = None, callback: Callab
     
     return current_data
 
-    
+
+class Status:
+    """
+    Status class to store and access data from a DataStore object.
+
+    Attributes:
+        Any number of attributes specified by the keys parameter in the constructor.
+    """
+
+    def __init__(
+        self, 
+        data_store: DataStore, 
+        keys: list
+    ):
+        """
+        Initialize a new instance of the Status class.
+
+        Args:
+            data_store: A DataStore object that contains the data.
+            keys (list): A list of keys to extract from the data store. Examples of default keys are: 
+                         ['SURVEY_DATASTORE', 'SELECTED_SURVEY_FILEPATH', 'SELECTED_STATION',
+                         'SELECTED_SURVEY', 'SELECTED_STATION_DIRPATH', 'SELECTED_VIDEO_FILEPATH'].
+        """
+        
+        # Check if data_store has the required attribute
+        if not hasattr(data_store, 'storage_strategy') or not hasattr(data_store.storage_strategy, 'data'):
+            raise ValueError("The provided data store does not have a storage_strategy with a data attribute")
+
+        # Check if keys is a list
+        if not isinstance(keys, list):
+            raise TypeError("Keys must be a list")
+
+        # Set attributes from the data store
+        for key in keys:
+            setattr(self, key, data_store.storage_strategy.data.get(key, None))
+
+    def get_attributes(self):
+        """
+        Get a dictionary of all attributes that are not None.
+
+        Returns:
+            A dictionary where the keys are the attribute names and the values are the attribute values.
+        """
+        return {key: getattr(self, key) for key in self.__dict__ if getattr(self, key) is not None}
+
+
+class AttributeRemover:
+    """
+    AttributeRemover class to remove specified attributes from an object.
+
+    Attributes:
+        target_object: The object from which to remove attributes.
+
+    Usage:
+        ```
+        class SomeClass:
+            def __init__(self):
+                self.attribute1 = "value1"
+                self.attribute2 = "value2"
+                self.attribute3 = "value3"
+
+        obj = SomeClass()
+        remover = AttributeRemover(obj)
+        removed_keys = remover.remove_attributes(['attribute1', 'attribute2'])
+
+        print(removed_keys)  # ['attribute1', 'attribute2']
+        print(hasattr(obj, 'attribute1'))  # False
+        print(hasattr(obj, 'attribute2'))  # False
+        print(hasattr(obj, 'attribute3'))  # True
+        ```
+        In this example, the AttributeRemover successfully removes attribute1 and attribute2 from obj, 
+        but attribute3 is still present.
+
+    """
+
+    def __init__(self, target_object):
+        """
+        Initialize a new instance of the AttributeRemover class.
+
+        Args:
+            target_object: The object from which to remove attributes.
+        """
+        
+        self.target_object = target_object
+
+    def remove_attributes(self, keys: list):
+        """
+        Remove specified attributes from the target object.
+
+        Args:
+            keys (list): A list of attribute names to remove.
+
+        Returns:
+            A list of attribute names that were successfully removed.
+        """
+
+        # Check if keys is a list
+        if not isinstance(keys, list):
+            raise TypeError("Keys must be a list")
+
+        removed_keys = []
+        for key in keys:
+            if hasattr(self.target_object, key):
+                delattr(self.target_object, key)
+                removed_keys.append(key)
+
+        return removed_keys
