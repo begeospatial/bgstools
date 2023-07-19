@@ -123,27 +123,28 @@ def display_image_carousel(image_paths_dict: dict):
     image_titles = list(image_paths_dict.keys())
 
     # Create a slider for navigation
-    slider_value = st.slider("Select an image", 0, num_images - 1, 0)
+    slider_value = st.slider("Select an frame", 0, num_images - 1, 0)
     # Display a slider to select the image index
 
     # Get the selected image title and path
     selected_image_title = image_titles[slider_value]
     selected_image_path = image_paths_dict[selected_image_title]
-    # Retrieve the selected image title and its corresponding file path
+    #
+    FRAME_NUMBER = {str(slider_value).zfill(2)}
 
     # Load and display the selected image
     if os.path.exists(selected_image_path):
-        st.write(f"Showing image {slider_value}: '**frame {selected_image_title}**'")
+        st.write(f"Showing frame **{FRAME_NUMBER}** | KEY: **`{selected_image_title}`**")
         # Display the index and title of the selected image
 
         image = Image.open(selected_image_path)
         # Open the selected image file
 
-        st.image(image, caption=f'frame {selected_image_title}', use_column_width=True)
+        st.image(image, caption=f'Frame {FRAME_NUMBER} | KEY: {selected_image_title}', use_column_width=True)
         # Display the image with its caption
 
     else:
-        st.error(f"Image not found: {selected_image_path}")
+        st.error(f"Frame image not found: {selected_image_path}")
         # Display an error message if the image file is not found
 
 
