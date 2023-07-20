@@ -2,8 +2,8 @@ import os
 import cv2
 import random
 import numpy as np
-import subprocess 
-import tempfile
+import subprocess
+from pathlib import Path 
 import json
 from urllib.parse import urlparse
 from urllib.request import urlopen
@@ -281,52 +281,51 @@ def convert_codec(input_file, output_file, callback:callable=None)->bool:
         return True
 
 
-def extract_frames_every_n_seconds(video_filepath:str, frames_dirpath:str, prefix:str, n_seconds:int, start_time_in_seconds: int) -> dict:
-    """ 
+def extract_frames_every_n_seconds(video_filepath: str, frames_dirpath: str, prefix: str, n_seconds: int, start_time_in_seconds: int) -> dict:
+    """
     Extracts video frames every `n_seconds` from a video starting from `start_time` and saves them in `output_dir`.
 
     Args:
         video_filepath (str): Path to the video file.
-        output_dir (str): Directory where the extracted frames will be saved.
-        prefix (str): Prefix to be used for the frame file names.         
+        frames_dirpath (str): Directory where the extracted frames will be saved.
+        prefix (str): Prefix to be used for the frame file names.
         n_seconds (int): The interval in seconds at which frames should be extracted from the video.
-        fps (float): The frame rate of the video (frames per second).
-        start_time_in_seconds (int): The start time in seconds from which frame extraction should begin.        
+        start_time_in_seconds (int): The start time in seconds from which frame extraction should begin.
 
     Returns:
         dict: A dictionary where the keys are the timestamps and the values are the corresponding frame file paths.
     """
+    video_path = Path(video_filepath)
+    frames_dir = Path(frames_dirpath)
+    frames_dict = {}
+    step = n_seconds
+    start_time = float(start_time_in_seconds)
+
     # Check if the video file exists
-    if not os.path.isfile(video_filepath):
+    if not video_path.is_file():
         raise ValueError(f"Video file not found: {video_filepath}")
 
     # Check if output directory exists, if not create it
-    os.makedirs(frames_dirpath, exist_ok=True)
-
-    frames_dict = {}
-    step = n_seconds
+    frames_dir.mkdir(parents=True, exist_ok=True)
 
     # Get the total duration of the video in seconds
-    cmd = ['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'json', video_filepath]
+    cmd = ['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'json', str(video_path)]
     output = subprocess.check_output(cmd).decode('utf-8')
     duration = float(json.loads(output)['format']['duration'])
 
     # Ensure that the start time is not greater than the total duration of the video
-    if int(start_time_in_seconds) > int(duration):
-        raise ValueError(f"Start time {start_time_in_seconds} exceeds video duration {duration}")
+    if start_time > duration:
+        raise ValueError(f"Start time {start_time} exceeds video duration {duration}")
 
-    for i in range(start_time_in_seconds, int(duration), step):
-        # Formatted time with leading zeros
-        time_str = str(i).zfill(6)
-        frame_file_path = os.path.join(frames_dirpath, f'{prefix}_{time_str}_sec.png')
+    for i in range(int(start_time), int(duration), step):
+        frame_file_path = frames_dir / f'{prefix}_{i:06d}_sec.png'
         try:
-            subprocess.call(['ffmpeg', '-ss', str(i), '-i', video_filepath, '-frames:v', '1', frame_file_path])
+            subprocess.run(['ffmpeg', '-ss', str(i), '-i', str(video_path), '-frames:v', '1', str(frame_file_path)], check=True)
         except Exception as e:
-            message = f'Error extracting frames at {i} seconds. Exception: {e}'
-            raise Exception(message)
+            raise ValueError(f"Error extracting frame at {i} seconds: {e}")
         else:
-            frames_dict[f"SEC_{time_str}"] = frame_file_path
-    
+            frames_dict[f"SEC_{i:06d}"] = str(frame_file_path)
+
     return frames_dict
 
 
