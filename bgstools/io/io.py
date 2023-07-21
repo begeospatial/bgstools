@@ -1,4 +1,5 @@
 import os
+import shutil
 from glob import glob
 import yaml
 from collections import OrderedDict
@@ -7,6 +8,58 @@ import toml
 from pathlib import Path
 from typing import Callable, Optional
 
+
+
+def is_directory_empty(directory:str):
+    """Check if a directory is empty or not.
+    
+    Args:
+        directory (str): Path to the directory.
+        
+    Returns:
+        bool: True if directory is empty, False otherwise.
+        
+    Raises:
+        ValueError: If the provided path is not a directory.
+        OSError: If there is an error accessing the directory.
+    """
+    try:
+        if not os.path.isdir(directory):
+            raise ValueError(f"{directory} is not a directory")
+        
+        return len(os.listdir(directory)) == 0
+    except OSError as e:
+        print(f"Error accessing directory {directory}. Reason: {e}")
+        raise
+
+def delete_directory_contents(directory:str):
+    """Delete the contents of a directory if it is not empty.
+    
+    Args:
+        directory (str): Path to the directory.
+        
+    Raises:
+        ValueError: If the provided path is not a directory.
+        OSError: If there is an error accessing the directory or its contents.
+    """
+    try:
+        if not os.path.isdir(directory):
+            raise ValueError(f"{directory} is not a directory")
+        
+        if not is_directory_empty(directory):
+            for filename in os.listdir(directory):
+                file_path = os.path.join(directory, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except OSError as e:
+                    print(f'Failed to delete {file_path}. Reason: {e}')
+                    raise
+    except OSError as e:
+        print(f"Error accessing directory {directory}. Reason: {e}")
+        raise
 
 
 def check_or_create_subdirectory(directory: str, subdirectory: str, callback: Callable[[str], None]) -> None:
