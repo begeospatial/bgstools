@@ -107,7 +107,7 @@ def toggle_button(*args, key=None, **kwargs):
     return st.session_state[key]
 
 
-def display_image_carousel(image_paths_dict: dict):
+def display_image_carousel(image_paths_dict: dict, RANDOM_FRAMES:list = []):
     """
     Display an image carousel with navigation slider.
 
@@ -139,7 +139,11 @@ def display_image_carousel(image_paths_dict: dict):
 
     # Load and display the selected image
     if os.path.exists(selected_image_path):
-        st.write(f"Showing frame **{FRAME_NUMBER}** | KEY: **`{selected_image_title}`**")
+        if selected_image_title in RANDOM_FRAMES:
+            st.write(f":star: Frame **{FRAME_NUMBER}** | KEY: **:blue[{selected_image_title}]** | :white_check_mark:")
+        else:
+            st.write(f":x: Frame **{FRAME_NUMBER}** | KEY: **`{selected_image_title}`**")
+        
         # Display the index and title of the selected image
 
         image = Image.open(selected_image_path)
