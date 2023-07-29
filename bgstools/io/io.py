@@ -9,6 +9,79 @@ from pathlib import Path
 from typing import Callable, Optional
 
 
+def check_nested_dict(nested_dict, keys_list):
+    """
+    Helper function to recursively search for keys in a nested dictionary.
+    
+    Parameters:
+    nested_dict (dict): The dictionary to search.
+    keys_list (list): The list of keys to check for.
+    
+    Returns:
+    bool: True if all keys are found, False otherwise.
+    """
+    for keys in keys_list:
+        temp_dict = nested_dict
+        for key in keys:
+            if key in temp_dict:
+                temp_dict = temp_dict[key]
+            else:
+                break
+        else:
+            return True
+    return False
+
+def get_survey_files_with_keys(surveys_dirpath, keys_list):
+    """
+    This function navigates through a directory and its subdirectories to find .yaml files.
+    It then checks if these files contain all the specified keys from a provided list.
+    
+    Parameters:
+    surveys_dirpath (str): The path of the directory to search.
+    keys_list (list): The list of keys to check for in the .yaml files.
+    
+    Returns:
+    dict: A dictionary with filenames as keys and boolean values indicating whether the 
+    file contains all the specified keys.
+
+    Usage:
+    To check for the keys 'APP>SURVEYS>SURVEY_NAME' and 'APP>CONFIG>REMOTE>IP', 
+    you would call the function like this:
+        `results = get_survey_files_with_keys('surveys_dir', [['APP', 'SURVEYS', 'SURVEY_NAME'], ['APP', 'CONFIG', 'REMOTE', 'IP']])`
+    """
+    # Dictionary to store results
+    file_dict = {}
+
+    # Check if the provided directory exists
+    if not os.path.exists(surveys_dirpath):
+        raise ValueError(f"The provided directory {surveys_dirpath} does not exist.")
+    
+    # Walk through the directory
+    for root, dirs, files in os.walk(surveys_dirpath):
+        for file in files:
+            # Check if the file is a .yaml file
+            if file.endswith(".yaml"):
+                # Construct the full file path
+                file_path = os.path.join(root, file)
+                
+                # Open and load the yaml file
+                try:
+                    with open(file_path, 'r') as stream:
+                        data = yaml.safe_load(stream)
+                except yaml.YAMLError as exc:
+                    print(f"Error loading YAML file {file_path}: {exc}")
+                    continue
+                
+                # Check if all keys in the keys_list are in the data
+                if check_nested_dict(data, keys_list):
+                    file_dict[file] = True
+                else:
+                    file_dict[file] = False
+                    
+    return file_dict
+
+
+
 
 def is_directory_empty(directory:str):
     """Check if a directory is empty or not.
