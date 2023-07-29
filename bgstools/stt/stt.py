@@ -107,7 +107,7 @@ def toggle_button(*args, key=None, **kwargs):
     return st.session_state[key]
 
 
-def display_image_carousel(image_paths_dict: dict, RANDOM_FRAMES:list = []):
+def display_image_carousel(image_paths_dict: dict, RANDOM_FRAMES:dict = {}):
     """
     Display an image carousel with navigation slider.
 
@@ -118,45 +118,48 @@ def display_image_carousel(image_paths_dict: dict, RANDOM_FRAMES:list = []):
         None
 
     """
+    if image_paths_dict is not None:
+            
+        num_images = len(image_paths_dict)
+        image_titles = list(image_paths_dict.keys())
 
-    num_images = len(image_paths_dict)
-    image_titles = list(image_paths_dict.keys())
+        col1, col2 = st.columns([1,3])
+        with col1:            
+            # Create a number input for navigation
+            frame_number = st.number_input(label= "**Preview frame:**",  
+                                    min_value=1,  
+                                    max_value=num_images,
+                                    step=1,
+                                    help="Use to navigate through the available frames.",                                
+                                    value=1)
+        with col2:
+            # Get the selected image title and path
+            selected_image_title = image_titles[frame_number - 1]
+            selected_image_path = image_paths_dict[selected_image_title]
+            #
+            FRAME_NUMBER = str(frame_number).zfill(2)
 
-    col1, col2 = st.columns([1,3])
-    with col1:            
-        # Create a number input for navigation
-        frame_number = st.number_input(label= "**Preview frame:**",  
-                                min_value=1,  
-                                max_value=num_images,
-                                step=1,
-                                help="Use to navigate through the available frames.",                                
-                                value=1)
-    with col2:
-        # Display the corresponding title next to the number input
-        if selected_image_title in RANDOM_FRAMES:
-            st.write(f":star: Frame **:blue[{FRAME_NUMBER}]** | KEY: **:green[{selected_image_title}]** | :white_check_mark:")
+            # Display the corresponding title next to the number input
+            if selected_image_title in RANDOM_FRAMES:
+                st.write(f":star: Frame **:blue[{FRAME_NUMBER}]** | KEY: **:green[{selected_image_title}]** | :white_check_mark:")
+            else:
+                st.write(f"Frame **{FRAME_NUMBER}** | KEY: **`{selected_image_title}`**")
+            
+            
+        # Load and display the selected image
+        if os.path.exists(selected_image_path):
+                
+            image = Image.open(selected_image_path)
+            # Open the selected image file
+
+            st.image(image, caption=f'Frame {FRAME_NUMBER} | KEY: {selected_image_title}', use_column_width=True)
+            # Display the image with its caption
+
         else:
-            st.write(f"Frame **{FRAME_NUMBER}** | KEY: **`{selected_image_title}`**")
-        
-        # Get the selected image title and path
-        selected_image_title = image_titles[frame_number - 1]
-        selected_image_path = image_paths_dict[selected_image_title]
-        #
-        FRAME_NUMBER = str(frame_number).zfill(2)
-
-    # Load and display the selected image
-    if os.path.exists(selected_image_path):
-              
-        image = Image.open(selected_image_path)
-        # Open the selected image file
-
-        st.image(image, caption=f'Frame {FRAME_NUMBER} | KEY: {selected_image_title}', use_column_width=True)
-        # Display the image with its caption
-
+            st.error(f"BGSTOOLS: Frame image not found: {selected_image_path}")
+            # Display an error message if the image file is not found
     else:
-        st.error(f"Frame image not found: {selected_image_path}")
-        # Display an error message if the image file is not found
-
+        st.error("BGSTOOLS: Frame images dictionary is None.")
 
 
 def video_player(video_filepath, marker_frame_positions=[100, 200, 500, 850, 1100, 1500, 2000, 3000, 4000]):

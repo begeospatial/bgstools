@@ -1,7 +1,7 @@
 # poetry export --without-hashes --format=requirements.txt > requirements.txt && twine upload -r pypi dist/*
 [tool.poetry]
 name = "bgstools"
-version = "0.1.44"
+version = "0.1.45"
 description = "BeGeoSpatial Development Tools"
 authors = ["José Beltrán <102664984+jose-begeospatial@users.noreply.github.com>"]
 readme = "README.md"
