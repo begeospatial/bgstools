@@ -4,6 +4,64 @@ from importlib.util import spec_from_file_location, module_from_spec
 import datetime
 
 
+def find_value_in_dict(data:dict, search_value:str, nested_path:list=[])->list:
+    """
+    This function recursively searches a nested dictionary (traverse) for a given value or key
+    and returns all paths of keys to the value or key.
+    
+    Parameters:
+    data (dict): The dictionary to search.
+    search_value: The value or key to search for.
+    nested_path (list, optional): The current path of keys. Defaults to an empty list.
+    
+    Returns:
+    list: A list of paths of keys to the value or key.
+    """
+    paths = []
+    if isinstance(data, dict):
+        for k, v in data.items():
+            new_path = nested_path + [k]
+            if k == search_value:
+                paths.append(new_path)
+            paths += find_value_in_dict(v, search_value, new_path)
+    elif isinstance(data, list):
+        for i, v in enumerate(data):
+            new_path = nested_path + [i]
+            paths += find_value_in_dict(v, search_value, new_path)
+    elif data == search_value:
+        paths.append(nested_path)
+    return paths
+
+
+
+def get_dynamic_nested_key_value(data:dict, keys_list:list)->dict:
+    """
+    This function retrieves the value of a nested key in a dictionary,
+    where one of the keys in the path is unknown and needs to be looked up dynamically.
+    
+    Parameters:
+    data (dict): The dictionary to search.
+    keys_list (list): The list of keys that represents the path to the nested key.
+    
+    Returns:
+    dict or None: The value of the nested key if it exists and is not empty, None otherwise.
+
+    Usage:
+        Return a dictionary nested just after the unknown key, or None if no such dictionary exists.
+
+        `frames = get_dynamic_nested_key_value(data, ['APP', 'SURVEYS', None, 'FRAMES'])
+    """
+    for key in keys_list:
+        if key is None:
+            for k, v in data.items():
+                if isinstance(v, dict):
+                    return v
+            return None
+        try:
+            data = data[key]
+        except (KeyError, TypeError):
+            return None
+    return data if data else None
 
 
 def get_nested_dict_value(data_dict, keys_list, default=None):

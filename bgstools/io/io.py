@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 
-def check_nested_dict(nested_dict, keys_list):
+def check_nested_dict(nested_dict:dict, keys_list:list):
     """
     Helper function to recursively search for keys in a nested dictionary.
     
@@ -31,13 +31,14 @@ def check_nested_dict(nested_dict, keys_list):
             return True
     return False
 
-def get_survey_files_with_keys(surveys_dirpath, keys_list):
+
+def get_yaml_files_with_keys(dirpath:dict, keys_list:list):
     """
     This function navigates through a directory and its subdirectories to find .yaml files.
     It then checks if these files contain all the specified keys from a provided list.
     
     Parameters:
-    surveys_dirpath (str): The path of the directory to search.
+    dirpath (str): The path of the directory to search.
     keys_list (list): The list of keys to check for in the .yaml files.
     
     Returns:
@@ -47,17 +48,17 @@ def get_survey_files_with_keys(surveys_dirpath, keys_list):
     Usage:
     To check for the keys 'APP>SURVEYS>SURVEY_NAME' and 'APP>CONFIG>REMOTE>IP', 
     you would call the function like this:
-        `results = get_survey_files_with_keys('surveys_dir', [['APP', 'SURVEYS', 'SURVEY_NAME'], ['APP', 'CONFIG', 'REMOTE', 'IP']])`
+        `results = get_yaml_files_with_keys('surveys_dir', [['APP', 'SURVEYS', 'SURVEY_NAME'], ['APP', 'CONFIG', 'REMOTE', 'IP']])`
     """
     # Dictionary to store results
     file_dict = {}
 
     # Check if the provided directory exists
-    if not os.path.exists(surveys_dirpath):
-        raise ValueError(f"The provided directory {surveys_dirpath} does not exist.")
+    if not os.path.exists(dirpath):
+        raise ValueError(f"The provided directory {dirpath} does not exist.")
     
     # Walk through the directory
-    for root, dirs, files in os.walk(surveys_dirpath):
+    for root, dirs, files in os.walk(dirpath):
         for file in files:
             # Check if the file is a .yaml file
             if file.endswith(".yaml"):
