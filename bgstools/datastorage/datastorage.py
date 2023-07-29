@@ -5,6 +5,36 @@ from dataclasses import dataclass, field
 import chardet
 
 
+def update_and_store_data(data, keys_list, new_value, datastore):
+    """
+    This function navigates to a specific location in a nested dictionary using a list of keys, 
+    updates the value at that location, and then stores the updated dictionary in a datastore.
+
+    Args:
+        data (dict): The dictionary to update and store.
+        keys_list (list): A list of keys indicating the path to the value to be updated.
+        new_value (any): The new value to set at the specified location.
+        datastore (object): The datastore object where the updated dictionary should be saved.
+
+    Returns:
+        None. However, this function has the side effect of updating the `data` dictionary and storing it in the datastore.
+
+    Raises:
+        KeyError: If any key in the keys_list is not found in the dictionary, an error message will be raised.
+    """
+    try:
+        # Navigate to the nested dictionary
+        nested_dict = data
+        for key in keys_list[:-1]:
+            nested_dict = nested_dict[key]
+
+        # Update the value and store the data
+        nested_dict[keys_list[-1]] = new_value
+        datastore.store_data(data=data)
+    except KeyError as e:
+        raise (f'BGSTOOLS: Error updating and storing data: {e}')
+
+
 @dataclass
 class StorageStrategy:
     """A base class for storage strategies that manage data.

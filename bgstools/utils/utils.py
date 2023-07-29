@@ -4,6 +4,29 @@ from importlib.util import spec_from_file_location, module_from_spec
 import datetime
 
 
+def get_nested_dict_value(data_dict, keys_list, default=None):
+    """
+    This function retrieves a value from a nested dictionary using a list of keys. 
+    If a KeyError is encountered at any level, the function will return a default value.
+
+    Args:
+        data_dict (dict): The dictionary from which to retrieve the value.
+        keys_list (list): A list of keys, ordered by their level in the dictionary.
+        default (any, optional): The default value to return if any key in keys_list is not found. 
+            Defaults to None.
+
+    Returns:
+        The value at the nested key if it exists, otherwise the default value.
+    """
+    try:
+        for key in keys_list:
+            data_dict = data_dict[key]
+        return data_dict
+    except KeyError:
+        return default
+
+
+
 def str_as_dtype(datatype: str, callback: callable = None):
     """
     Converts a string representation of a data type to the corresponding Python data type.
