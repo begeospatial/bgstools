@@ -7,6 +7,88 @@ import requests
 import toml
 from pathlib import Path
 from typing import Callable, Optional
+from ..utils import find_value_in_dict
+
+
+def find_files_with_key_or_value(surveys_dirpath:str, search_value:str):
+    """
+    This function navigates through a directory and its subdirectories to find .yaml files.
+    It then loads each file into a dictionary and searches the dictionary for a given key or value.
+    
+    Parameters:
+    surveys_dirpath (str): The path of the directory to search.
+    search_value: The key or value to search for in the .yaml files.
+    
+    Returns:
+    list: A list of dictionaries, each containing a filename, an unknown key, its value, and a list of keys.
+
+    Usage:
+    
+    Search withing `surveys_dir` for the value `v1`:
+        `results = find_files_with_key_or_value('surveys_dir', 'v1')`
+
+    ```
+    surveys_dir
+    ├── survey_1.yaml
+    └── survey_2.yaml
+    ```
+
+    survey_1.yaml
+    ```
+    APP:
+        SURVEYS:
+            Survey 1:
+                FRAMES: 
+                    FRAME_1: 
+                        Data: 'v1'
+    ```
+    survey_2.yaml
+
+    ```
+    APP:
+        SURVEYS:
+            Survey 2:
+                FRAMES:
+                    FRAME_1:
+                        Data: 'v1'
+    ```
+
+`
+
+    """
+    # Check if the provided directory exists
+    if not os.path.exists(surveys_dirpath):
+        raise ValueError(f"The provided directory {surveys_dirpath} does not exist.")
+
+    result_list = []
+
+    # Walk through the directory
+    for root, dirs, files in os.walk(surveys_dirpath):
+        for file in files:
+            # Check if the file is a .yaml file
+            if file.endswith(".yaml"):
+                # Construct the full file path
+                file_path = os.path.join(root, file)
+                
+                # Open and load the yaml file
+                try:
+                    with open(file_path, 'r') as stream:
+                        data = yaml.safe_load(stream)
+                except yaml.YAMLError as exc:
+                    print(f"Error loading YAML file {file_path}: {exc}")
+                    continue
+                
+                # Search for the key or value in the data
+                paths = find_value_in_dict(data, search_value)
+                for path in paths:
+                    result_list.append({
+                        'yaml_file': file,
+                        'unknown_key': path[-1],
+                        'value': data[path[-1]],
+                        'nested_list': path
+                    })
+
+    return result_list
 
 
 def check_nested_dict(nested_dict:dict, keys_list:list):

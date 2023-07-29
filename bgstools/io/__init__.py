@@ -5,7 +5,8 @@ from .io import load_yaml, get_available_services, \
     check_directory_exist_and_writable, create_directory_list, \
     create_file_list_with_extension, create_subdirectory, get_files_dictionary, \
     check_or_create_subdirectory, callback_function, \
-    is_directory_empty, delete_directory_contents, check_nested_dict, get_yaml_files_with_keys
+    is_directory_empty, delete_directory_contents, check_nested_dict, get_yaml_files_with_keys, \
+    find_files_with_key_or_value
 
 from .media import VideoLoader, export_processed_tiff, is_url, get_video_info, convert_image_frame, \
     load_big_tiff,  export_processed_tiff, extract_frames_every_n_seconds, select_random_frames, convert_codec, \
