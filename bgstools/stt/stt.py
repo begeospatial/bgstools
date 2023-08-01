@@ -123,7 +123,7 @@ def display_image_carousel(image_paths_dict: dict, RANDOM_FRAMES:dict = {}):
         num_images = len(image_paths_dict)
         image_titles = list(image_paths_dict.keys())
 
-        col1, col2 = st.columns([1,3])
+        col1, _, col3, _ = st.columns([1,1,2,1])
         with col1:            
             # Create a number input for navigation
             frame_number = st.number_input(label= "**Preview frame:**",  
@@ -132,7 +132,7 @@ def display_image_carousel(image_paths_dict: dict, RANDOM_FRAMES:dict = {}):
                                     step=1,
                                     help="Use to navigate through the available frames.",                                
                                     value=1)
-        with col2:
+        with col3:
             # Get the selected image title and path
             selected_image_title = image_titles[frame_number - 1]
             selected_image_path = image_paths_dict[selected_image_title]
@@ -141,9 +141,9 @@ def display_image_carousel(image_paths_dict: dict, RANDOM_FRAMES:dict = {}):
 
             # Display the corresponding title next to the number input
             if selected_image_title in RANDOM_FRAMES:
-                st.write(f":star: Frame **:blue[{FRAME_NUMBER}]** | KEY: **:green[{selected_image_title}]** | :white_check_mark:")
+                st.subheader(f":star: Frame **:blue[{FRAME_NUMBER}]** | KEY: **:green[{selected_image_title}]** | :white_check_mark:")
             else:
-                st.write(f"Frame **{FRAME_NUMBER}** | KEY: **`{selected_image_title}`**")
+                st.subheader(f"Frame **{FRAME_NUMBER}** | KEY: **`{selected_image_title}`**")
             
             
         # Load and display the selected image
