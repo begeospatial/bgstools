@@ -236,7 +236,7 @@ def select_random_frames(frames:dict, num_frames:int = 10):
         raise ValueError("Number of frames to select is greater than the available frames")
 
     selected_keys = random.sample(sorted(frames.keys()), num_frames)
-    return {key:frames[key] for key in sorted(selected_keys)}
+    return {key: {'FILEPATH': frames[key]} for key in sorted(selected_keys)}
 
 
 def convert_codec(input_file, output_file, callback:callable=None)->bool:
