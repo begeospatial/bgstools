@@ -80,7 +80,7 @@ def get_nested_dict_value(data_dict, keys_list, default=None):
     """
     try:
         for key in keys_list:
-            data_dict = data_dict[key]
+            data_dict = data_dict.get(key, None)
         return data_dict
     except KeyError:
         return default
