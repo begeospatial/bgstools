@@ -1,12 +1,20 @@
 import os
 import cv2
 import random
-import numpy as np
 import subprocess
-from pathlib import Path 
+from pathlib import Path
+from enum import Enum 
 import json
 from urllib.parse import urlparse
 from urllib.request import urlopen
+
+class Status(Enum):
+    IN_PROGRESS = 'IN_PROGRESS'
+    COMPLETED = 'COMPLETED'
+    NOT_STARTED = 'NOT_STARTED'
+    ERROR = 'ERROR'
+    UPDATED = 'UPDATED'
+
 
 def convert_image_frame(frame, output_path, format='png', compression=False, jpeg_quality=95, tiff_metadata=None):
     """
@@ -221,22 +229,44 @@ def calculate_frames(duration_in_seconds:int, start_time_in_seconds:int, fps:flo
     return num_frames
 
 
-def select_random_frames(frames:dict, num_frames:int = 10):
+def select_random_frames(frames: dict, num_frames: int = 10) -> dict:
     """
-    Randomly selects `num_frames` from the `frames` dictionary
-
+    Selects a specified number of frames at random from a given dictionary of video frames.
+    
     Args:
-        frames (dict): Video frames dictionary. Keys are frame numbers and values contain the filepath of the temporal frames.
-        num_frames (int): Number of frames to sample. Defaults to 10.
-
+        frames (dict): A dictionary representing video frames. The keys are the frame numbers, 
+                       and the values are the file paths where each frame is stored.
+                       
+        num_frames (int, optional): The number of frames to sample from the `frames` dictionary. 
+                                    Defaults to 10.
+                                    
     Returns:
-        dict: Dictionary where keys are frame numbers and values are filepaths of the sampled temporal frames.
+        dict: A dictionary where each key-value pair corresponds to a randomly selected frame. 
+              The keys are frame numbers, and the values are dictionaries with:
+              - FILEPATH: The path to the frame's file.
+              - INTERPRETATION: A dictionary that includes:
+                - DOTPOINTS: Initially an empty dictionary. Expected to store IDs of points in the frame, 
+                             and corresponding dictionaries with `x`, `y` coordinates and annotations.
+                - STATUS: Initialized to 'NOT_STARTED'. Can be updated to any other value from the `Status` Enum 
+                          (`IN_PROGRESS`, `COMPLETED`, `ERROR`, `UPDATED`).
+
+    Raises:
+        ValueError: If `num_frames` is greater than the number of available frames in `frames`.
     """
     if num_frames > len(frames):
         raise ValueError("Number of frames to select is greater than the available frames")
 
     selected_keys = random.sample(sorted(frames.keys()), num_frames)
-    return {key: {'FILEPATH': frames[key]} for key in sorted(selected_keys)}
+    result = {
+        key: {
+            'FILEPATH': frames[key], 
+            'INTERPRETATION': {
+                'DOTPOINTS': {}, 
+                'STATUS': Status.NOT_STARTED.value
+            }
+        } for key in sorted(selected_keys)
+    }
+    return result
 
 
 def convert_codec(input_file, output_file, callback:callable=None)->bool:

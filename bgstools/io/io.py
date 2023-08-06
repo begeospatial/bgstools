@@ -273,6 +273,9 @@ def get_files_dictionary(dirpath: str, file_extension: str, keep_extension_in_ke
     Returns:
         dict: A dictionary where the keys are the filenames (without extension) and the values are the full normalized paths of the files.
     """
+    if dirpath is None:
+        raise ValueError("The directory path cannot be None.")
+    
     if not os.path.isdir(dirpath):
         raise ValueError(f"The specified directory path '{dirpath}' does not exist or is not a directory.")
 
